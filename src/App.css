@@ -1,0 +1,69 @@
+.menu-container {
+    position: relative;
+    list-style: none;
+}
+
+.submenu {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    min-width: 150px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+    border-radius: 12px;
+}
+
+.submenu li {
+    padding: 8px;
+    white-space: nowrap;
+   
+}
+
+.submenu li a {
+    text-decoration: none;
+    color: #4e7cb2;
+    display: block;
+}
+
+.submenu li a:hover {
+    animation-duration: 12s;
+}
+
+.menu-container:hover .submenu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.tab-wrapper {
+    position: relative;
+    display: flex;
+  }
+  
+.tab-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 10px 0;
+}
+
+.underline {
+  position: absolute;
+  bottom: 0;
+  height: 3px;
+  background-color: white;
+  transition: all 0.3s ease;
+  width: 0;
+  left: 0;
+}
+
+
+.swiper-slide {
+    height: 300px;
+    background: transparent;
+}

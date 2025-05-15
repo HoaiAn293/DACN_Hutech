@@ -23,6 +23,8 @@ const DriverManager = () => {
   const [form, setForm] = useState(initialForm);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState(initialForm);
 
   const fetchDrivers = () => {
     setLoading(true);
@@ -43,11 +45,21 @@ const DriverManager = () => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: name === "status" ? Number(value) : value });
   };
+  const phoneRegex = /^0\d{9}$/;
+  const licenseRegex = /^[A-Za-z0-9]{8,}$/;
 
   const handleAddDriver = (e) => {
     e.preventDefault();
     setAdding(true);
     setError("");
+    if (!phoneRegex.test(form.phone_number)) {
+      setError("Số điện thoại phải bắt đầu bằng 0 và đủ 10 số.");
+      return;
+    }
+    if (!licenseRegex.test(form.license_number)) {
+      setError("Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ và số.");
+      return;
+    }
     fetch("http://localhost/DACS_Hutech/backend/add_driver.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -61,6 +73,81 @@ const DriverManager = () => {
           fetchDrivers();
         } else {
           setError(data.error || "Thêm tài xế thất bại");
+        }
+      })
+      .catch(() => {
+        setAdding(false);
+        setError("Lỗi kết nối server");
+      });
+  };
+
+  // Sửa
+  const handleEditClick = (driver) => {
+    setEditingId(driver.id);
+    setEditForm({
+      ...driver,
+      status: Number(driver.status),
+    });
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm({
+      ...editForm,
+      [name]: name === "status" ? Number(value) : value,
+    });
+  };
+
+  const handleUpdateDriver = (e) => {
+    e.preventDefault();
+    setAdding(true);
+    setError("");
+    if (!phoneRegex.test(editForm.phone_number)) {
+      setError("Số điện thoại phải bắt đầu bằng 0 và đủ 10 số.");
+      return;
+    }
+    if (!licenseRegex.test(editForm.license_number)) {
+      setError("Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ và số.");
+      return;
+    }
+    fetch("http://localhost/DACS_Hutech/backend/update_driver.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editForm),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setAdding(false);
+        if (data.success) {
+          setEditingId(null);
+          fetchDrivers();
+        } else {
+          setError(data.error || "Cập nhật tài xế thất bại");
+        }
+      })
+      .catch(() => {
+        setAdding(false);
+        setError("Lỗi kết nối server");
+      });
+  };
+
+  // Xóa
+  const handleDeleteDriver = (id) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa tài xế này?")) return;
+    setAdding(true);
+    setError("");
+    fetch("http://localhost/DACS_Hutech/backend/delete_driver.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setAdding(false);
+        if (data.success) {
+          fetchDrivers();
+        } else {
+          setError(data.error || "Xóa tài xế thất bại");
         }
       })
       .catch(() => {
@@ -93,6 +180,8 @@ const DriverManager = () => {
             required
             placeholder="Số điện thoại"
             className="border p-2 rounded"
+            pattern="^0\d{9}$"
+            title="Số điện thoại phải bắt đầu bằng 0 và đủ 10 số."
           />
           <input
             name="cccd"
@@ -109,6 +198,8 @@ const DriverManager = () => {
             required
             placeholder="Số bằng lái"
             className="border p-2 rounded"
+            pattern="^[A-Za-z0-9]{8,}$"
+            title="Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ và số."
           />
           <select
             name="vehicle_type"
@@ -171,26 +262,172 @@ const DriverManager = () => {
                 <th className="px-4 py-2 border">Ngày tạo</th>
                 <th className="px-4 py-2 border">Ghi chú</th>
                 <th className="px-4 py-2 border">Trạng thái</th>
+                <th className="px-4 py-2 border">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              {drivers.map((driver) => (
-                <tr key={driver.id}>
-                  <td className="px-4 py-2 border">{driver.id}</td>
-                  <td className="px-4 py-2 border">{driver.full_name}</td>
-                  <td className="px-4 py-2 border">{driver.phone_number}</td>
-                  <td className="px-4 py-2 border">{driver.cccd}</td>
-                  <td className="px-4 py-2 border">{driver.license_number}</td>
-                  <td className="px-4 py-2 border">{driver.vehicle_type}</td>
-                  <td className="px-4 py-2 border">{driver.created_at}</td>
-                  <td className="px-4 py-2 border">{driver.note}</td>
-                  <td className="px-4 py-2 border">
-                    {driver.status === "1" || driver.status === 1
-                      ? "Hoạt động"
-                      : "Không hoạt động"}
-                  </td>
-                </tr>
-              ))}
+              {drivers.map((driver) =>
+                editingId === driver.id ? (
+                  <tr key={driver.id} className="bg-yellow-50">
+                    <td className="px-4 py-2 border">{driver.id}</td>
+                    <td className="px-4 py-2 border">
+                      <input
+                        name="full_name"
+                        value={editForm.full_name}
+                        onChange={handleEditChange}
+                        className="border p-1 rounded w-full"
+                      />
+                    </td>
+                    <td className="px-4 py-2 border">
+                      <input
+                        name="phone_number"
+                        value={editForm.phone_number}
+                        onChange={handleEditChange}
+                        className="border p-1 rounded w-full"
+                      />
+                    </td>
+                    <td className="px-4 py-2 border">
+                      <input
+                        name="cccd"
+                        value={editForm.cccd}
+                        onChange={handleEditChange}
+                        className="border p-1 rounded w-full"
+                      />
+                    </td>
+                    <td className="px-4 py-2 border">
+                      <input
+                        name="license_number"
+                        value={editForm.license_number}
+                        onChange={handleEditChange}
+                        className="border p-1 rounded w-full"
+                      />
+                    </td>
+                    <td className="px-4 py-2 border">
+                      <select
+                        name="vehicle_type"
+                        value={editForm.vehicle_type}
+                        onChange={handleEditChange}
+                        className="border p-1 rounded w-full"
+                      >
+                        {vehicleOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-2 border">{driver.created_at}</td>
+                    <td className="px-4 py-2 border">
+                      <input
+                        name="note"
+                        value={editForm.note}
+                        onChange={handleEditChange}
+                        className="border p-1 rounded w-full"
+                      />
+                    </td>
+                    <td className="px-4 py-2 border">
+                      <select
+                        name="status"
+                        value={editForm.status}
+                        onChange={handleEditChange}
+                        className="border p-1 rounded w-full"
+                      >
+                        {statusOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-2 border">
+                      <button
+                        onClick={handleUpdateDriver}
+                        className="bg-green-500 text-white px-2 py-1 rounded mr-2"
+                        disabled={adding}
+                      >
+                        Lưu
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="bg-gray-400 text-white px-2 py-1 rounded"
+                      >
+                        Hủy
+                      </button>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={driver.id}>
+                    <td className="px-4 py-2 border">{driver.id}</td>
+                    <td
+                      className="px-4 py-2 border"
+                      onClick={() => handleEditClick(driver)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {driver.full_name}
+                    </td>
+                    <td
+                      className="px-4 py-2 border"
+                      onClick={() => handleEditClick(driver)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {driver.phone_number}
+                    </td>
+                    <td
+                      className="px-4 py-2 border"
+                      onClick={() => handleEditClick(driver)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {driver.cccd}
+                    </td>
+                    <td
+                      className="px-4 py-2 border"
+                      onClick={() => handleEditClick(driver)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {driver.license_number}
+                    </td>
+                    <td
+                      className="px-4 py-2 border"
+                      onClick={() => handleEditClick(driver)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {driver.vehicle_type}
+                    </td>
+                    <td className="px-4 py-2 border">{driver.created_at}</td>
+                    <td
+                      className="px-4 py-2 border"
+                      onClick={() => handleEditClick(driver)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {driver.note}
+                    </td>
+                    <td
+                      className="px-4 py-2 border"
+                      onClick={() => handleEditClick(driver)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {driver.status === "1" || driver.status === 1
+                        ? "Hoạt động"
+                        : "Không hoạt động"}
+                    </td>
+                    <td className="px-4 py-2 border">
+                      <button
+                        onClick={() => handleEditClick(driver)}
+                        className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
+                      >
+                        Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDeleteDriver(driver.id)}
+                        className="bg-red-500 text-white px-2 py-1 rounded"
+                        disabled={adding}
+                      >
+                        Xóa
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         )}

@@ -39,7 +39,7 @@ const HistoryPage = () => {
   };
 
   return (
-    <div className="flex w-full h-screen overflow-hidden">
+    <div className="flex w-full">
       <Sidebar onSelect={setSelectedSidebarTab} selectedTab={selectedSidebarTab} />
       <div className="flex-1 min-h-screen bg-gray-100 px-6 py-8">
         <h1 className="text-2xl font-bold text-[#4e7cb2] mb-6">Lịch sử đơn hàng</h1>

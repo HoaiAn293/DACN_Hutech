@@ -6,10 +6,38 @@ import "swiper/css/pagination";
 import { Navigation, Pagination } from "swiper/modules";
 
 const vehicles = [
-  { label: "Xe Van", image: "/img/xe-van.jpg" },
-  { label: "Xe Máy", image: "/img/xe-may.jpg" },
-  { label: "Xe Bán Tải", image: "/img/xe-ban-tai.jpg" },
-  { label: "Xe Tải", image: "/img/xe-tai.png" }
+  {
+    label: "Xe Máy",
+    image: "/img/xe-may.jpg",
+    maxWeight: 30,
+    pricePerKm: 5000,
+    baseFee: 15000,
+    description: "Phù hợp cho hàng hóa nhỏ gọn"
+  },
+  {
+    label: "Xe Van", 
+    image: "/img/xe-van.jpg",
+    maxWeight: 500,
+    pricePerKm: 10000,
+    baseFee: 25000,
+    description: "Thích hợp cho hàng hóa cỡ vừa, nội thành"
+  },
+  {
+    label: "Xe Bán Tải",
+    image: "/img/xe-ban-tai.jpg", 
+    maxWeight: 1000,
+    pricePerKm: 15000,
+    baseFee: 35000,
+    description: "Phù hợp cho hàng hóa số lượng lớn"
+  },
+  {
+    label: "Xe Tải",
+    image: "/img/xe-tai.png",
+    maxWeight: 2000,
+    pricePerKm: 20000,
+    baseFee: 50000,
+    description: "Phù hợp cho hàng hóa siêu trọng"
+  }
 ];
 
 const VehicleSelector = ({ onSelect }) => {
@@ -51,9 +79,9 @@ const VehicleSelector = ({ onSelect }) => {
           {vehicles.map((vehicle, index) => (
             <SwiperSlide key={index}>
               <div
-                className={`rounded-2xl border-2 p-4 text-center cursor-pointer transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 ${
+                className={`rounded-2xl border-2 p-4 text-center cursor-pointer transition-all duration-300 hover:shadow-xl ${
                   selected === vehicle.label
-                    ? "border-[#1d4e89] bg-blue-50 shadow-lg"
+                    ? "border-[#1d4e89] bg-blue-200 shadow-lg"
                     : "border-[#4e7cb2] hover:border-[#1d4e89]"
                 }`}
                 onClick={() => handleSelect(vehicle.label)}
@@ -65,33 +93,18 @@ const VehicleSelector = ({ onSelect }) => {
                     className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" 
                   />
                 </div>
-                <div className="text-[#4e7cb2] font-bold text-lg">{vehicle.label}</div>
+                <div className="text-[#4e7cb2] font-bold text-lg mb-2">{vehicle.label}</div>
+                <div className="text-gray-600 text-sm">
+                  <p>Tải trọng: {vehicle.maxWeight}kg</p>
+                  <p>Giá: {vehicle.pricePerKm.toLocaleString('vi-VN')}đ/km</p>
+                  <p className="text-xs mt-1 italic">{vehicle.description}</p>
+                </div>
               </div>
             </SwiperSlide>
           ))}
-        <div className="swiper-pagination"></div>
         </Swiper>
       </div>
 
-      <style jsx>{`
-        .vehicle-swiper .swiper-button-next::after,
-        .vehicle-swiper .swiper-button-prev::after {
-          font-size: 20px;
-          font-weight: bold;
-        }
-
-        .vehicle-swiper .swiper-pagination-bullet {
-          width: 8px;
-          height: 8px;
-          background: #4e7cb2;
-          opacity: 0.5;
-        }
-
-        .vehicle-swiper .swiper-pagination-bullet-active {
-          opacity: 1;
-          background: #1d4e89;
-        }
-      `}</style>
     </div>
   );
 };

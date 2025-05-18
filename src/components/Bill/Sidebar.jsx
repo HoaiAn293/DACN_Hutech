@@ -32,7 +32,7 @@ const Sidebar = ({ onSelect, selectedTab }) => {
     ];
 
     return (
-      <div className={`flex flex-col bg-[#4e7cb2] text-white ${isOpen ? 'w-64' : 'w-16'} transition-all`}>
+      <div className={`flex flex-col bg-[#4e7cb2] text-white ${isOpen ? 'w-70' : 'w-16'} transition-all`}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/20">
           <div className="flex items-center space-x-2">
@@ -69,7 +69,7 @@ const Sidebar = ({ onSelect, selectedTab }) => {
   
   const SidebarItem = ({ icon, label, isOpen, active }) => (
     <div
-      className={`flex items-center gap-3 px-4 py-2 text-sm cursor-pointer rounded-md transition-colors
+      className={`flex items-center text-[16px] gap-3 px-4 py-4 text-sm cursor-pointer rounded-md transition-colors
       ${active ? 'bg-white/20' : 'hover:bg-white/10'}`}>
       <span>{icon}</span>
       {isOpen && <span>{label}</span>}

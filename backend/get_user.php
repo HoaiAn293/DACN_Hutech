@@ -1,7 +1,7 @@
 <?php
 require_once 'database.php';
 
-header("Access-Control-Allow-Origin: http://localhost:5174");
+header("Access-Control-Allow-Origin: http://localhost:5173");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Accept");
 header("Access-Control-Allow-Credentials: true");
@@ -14,7 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['id'])) {
-        // Nếu có ID => lấy 1 người
         $id = intval($_GET['id']);
         if ($id <= 0) {
             echo json_encode(["success" => false, "message" => "ID không hợp lệ"]);

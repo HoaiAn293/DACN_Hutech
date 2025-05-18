@@ -22,7 +22,7 @@ const Statistics = () => {
   ];
 
   return (
-    <div  className="w-full  py-20">
+    <div  className="w-full py-20">
       <div style={{backgroundImage: "url(/img/statics.png)"}} className=" bg-cover bg-center mx-auto py-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <div

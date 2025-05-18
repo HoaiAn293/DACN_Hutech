@@ -3,57 +3,68 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Thêm các headers CORS cần thiết
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type, X-Requested-With");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Content-Type: application/json");
+
+// Xử lý preflight request OPTIONS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// Chỉ tiếp tục xử lý nếu là POST request
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['error' => 'Phương thức không được hỗ trợ']);
+    exit();
+}
 
 $conn = require 'database.php';
 
-$rawInput = file_get_contents("php://input");
-$data = json_decode($rawInput, true);
+$data = json_decode(file_get_contents('php://input'), true);
 
-if (!$data) {
-    echo json_encode(["status" => "error", "message" => "Không có dữ liệu gửi lên"]);
+// Kiểm tra và lấy user_id
+if (!isset($data['user_id']) || empty($data['user_id'])) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Không tìm thấy thông tin người dùng'
+    ]);
     exit;
 }
 
-$vehicle = $data['vehicle'] ?? '';
-$pickup = $data['pickup'] ?? [];
-$delivery = $data['delivery'] ?? [];
-$status = "Chờ xác nhận"; // mặc định trạng thái ban đầu
+$user_id = intval($data['user_id']);
 
-if (
-    !$vehicle ||
-    empty($pickup['address']) || empty($pickup['senderName']) || empty($pickup['senderPhone']) ||
-    empty($delivery['address']) || empty($delivery['receiverName']) || empty($delivery['receiverPhone']) ||
-    empty($delivery['goodsType']) || !isset($delivery['goodsValue'])
-) {
-    echo json_encode(["status" => "error", "message" => "Thiếu thông tin đơn hàng"]);
-    exit;
-}
+// Chuẩn bị câu lệnh SQL với user_id
+$sql = "INSERT INTO orders (user_id, vehicle, pickup_address, pickup_address_detail, sender_name, sender_phone, 
+        delivery_address, delivery_address_detail, receiver_name, receiver_phone, goods_type, goods_value, 
+        payment_method, shipping_fee, is_paid, status, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Chờ xác nhận', NOW())";
 
-$stmt = $conn->prepare("INSERT INTO orders (
-    vehicle,
-    pickup_address, pickup_address_detail, sender_name, sender_phone,
-    delivery_address, delivery_address_detail, receiver_name, receiver_phone,
-    goods_type, goods_value, status
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare($sql);
 
-$stmt->bind_param(
-    "ssssssssssis",
-    $vehicle,
-    $pickup['address'],
-    $pickup['addressDetail'],
-    $pickup['senderName'],
-    $pickup['senderPhone'],
-    $delivery['address'],
-    $delivery['addressDetail'],
-    $delivery['receiverName'],
-    $delivery['receiverPhone'],
-    $delivery['goodsType'],
-    $delivery['goodsValue'],
-    $status
+$payment_method = $data['payment_method'] ?? 'COD';
+$shipping_fee = floatval($data['shipping_fee'] ?? 0);
+$is_paid = $data['is_paid'] ?? '0';
+
+$stmt->bind_param("issssssssssdiss",
+    $user_id,
+    $data['vehicle'],
+    $data['pickup']['address'],
+    $data['pickup']['addressDetail'],
+    $data['pickup']['senderName'],
+    $data['pickup']['senderPhone'],
+    $data['delivery']['address'],
+    $data['delivery']['addressDetail'],
+    $data['delivery']['receiverName'],
+    $data['delivery']['receiverPhone'],
+    $data['delivery']['goodsType'],
+    $data['delivery']['goodsValue'],
+    $payment_method,
+    $shipping_fee,
+    $is_paid
 );
 
 if ($stmt->execute()) {

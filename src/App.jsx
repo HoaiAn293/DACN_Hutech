@@ -8,6 +8,8 @@ import StaffPage from './components/Staff/StafPage';
 import LoginPage from './components/Login/LoginPage';
 import AdminPage from './components/Admin/AdminPage';
 import { Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const UnauthorizedMessage = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -42,34 +44,37 @@ const ProtectedAdminRoute = ({ children }) => {
 };
 
 function App() {
-  return(
-    <Router>
-      <div className='w-full'>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />}/>
-          <Route path="/order" element={<OrderPage />} />
-          <Route path="/history" element={<HistoryPage />}/>
-          <Route path='/user' element={<UserPage />}/>
-          <Route 
-            path="/staff" 
-            element={
-              <ProtectedStaffRoute>
-                <StaffPage />
-              </ProtectedStaffRoute>
-            } 
-          />
-          <Route 
-            path="/admin" 
-            element={
-              <ProtectedAdminRoute>
-                <AdminPage />
-              </ProtectedAdminRoute>
-            } 
-          />
-        </Routes>
-      </div>
-    </Router>
+  return (
+    <>
+      <Router>
+        <div className='w-full'>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />}/>
+            <Route path="/order" element={<OrderPage />} />
+            <Route path="/history" element={<HistoryPage />}/>
+            <Route path='/user' element={<UserPage />}/>
+            <Route 
+              path="/staff" 
+              element={
+                <ProtectedStaffRoute>
+                  <StaffPage />
+                </ProtectedStaffRoute>
+              } 
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedAdminRoute>
+                  <AdminPage />
+                </ProtectedAdminRoute>
+              } 
+            />
+          </Routes>
+        </div>
+      </Router>
+      <ToastContainer />
+    </>
   );
 }
 export default App

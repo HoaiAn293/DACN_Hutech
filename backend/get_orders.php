@@ -1,16 +1,32 @@
 <?php
 session_start();
-header("Access-Control-Allow-Origin: http://localhost:5173");
-header("Access-Control-Allow-Credentials: true");
-header("Content-Type: application/json");
-header("Access-Control-Allow-Methods: GET");
-header("Access-Control-Allow-Headers: Content-Type");
+
+$allowed_origins = ['http://localhost:5173', 'http://localhost:5176'];
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+
+if (in_array($origin, $allowed_origins)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
+    header("Access-Control-Allow-Methods: GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type");
+    header("Content-Type: application/json");
+} else {
+    // Không cho phép origin lạ
+    http_response_code(403);
+    echo json_encode(["error" => true, "message" => "Origin not allowed"]);
+    exit;
+}
+
+// Xử lý preflight request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit;
+}
 
 try {
     $conn = require 'database.php';
-    
+
     $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : null;
-    $status = $_GET['status'] ?? null;
+    $status = isset($_GET['status']) ? $_GET['status'] : null;
 
     if (!$user_id) {
         echo json_encode([
@@ -20,33 +36,45 @@ try {
         exit;
     }
 
-    $sql = "SELECT * FROM orders WHERE 1=1";
-    $params = [];
-    $types = "";
+    $sql = "SELECT 
+                o.*, 
+                i.invoice_number, 
+                i.amount AS invoice_amount, 
+                i.payment_method AS invoice_payment_method, 
+                i.status AS invoice_status, 
+                i.created_at AS invoice_created_at
+            FROM orders o
+            LEFT JOIN invoices i ON o.id = i.order_id
+            WHERE o.user_id = ?";
+    $params = [$user_id];
+    $types = "i";
 
-    if ($status) {
-        $sql .= " AND status = ?";
+    if ($status !== null && $status !== "") {
+        $sql .= " AND o.status = ?";
         $params[] = $status;
         $types .= "s";
     }
 
-    if ($user_id > 0) {
-        $sql .= " AND user_id = ?";
-        $params[] = $user_id;
-        $types .= "i";
-    }
-
-    $sql .= " ORDER BY created_at DESC";
+    $sql .= " ORDER BY o.created_at DESC";
 
     $stmt = $conn->prepare($sql);
-    if (!empty($params)) {
-        $stmt->bind_param($types, ...$params);
+    if (!$stmt) {
+        echo json_encode([
+            "error" => true,
+            "message" => "Lỗi prepare: " . $conn->error
+        ]);
+        exit;
     }
+
+    $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
 
     $orders = [];
     while ($row = $result->fetch_assoc()) {
+        if (isset($row['goods_value'])) $row['goods_value'] = (int)$row['goods_value'];
+        if (isset($row['shipping_fee'])) $row['shipping_fee'] = (int)$row['shipping_fee'];
+        if (isset($row['invoice_amount'])) $row['invoice_amount'] = $row['invoice_amount'] !== null ? (int)$row['invoice_amount'] : null;
         $orders[] = $row;
     }
 

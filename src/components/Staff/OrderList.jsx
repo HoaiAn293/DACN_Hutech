@@ -2,58 +2,59 @@ import React, { useEffect, useState } from "react";
 
 const OrderList = () => {
   const [orders, setOrders] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statusMessage, setStatusMessage] = useState(null);
+
   const statusList = [
     "Chờ xác nhận",
-    "Đang giao", 
+    "Đang giao",
     "Đã nhận",
     "Hoàn tất",
     "Đã huỷ"
   ];
 
   useEffect(() => {
-    // Fetch users
-    fetch("http://localhost/DACS_Hutech/backend/get_user.php")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          const userAccounts = data.users.filter(user => user.role === 'user');
-          setUsers(userAccounts || []);
-        }
-      })
-      .catch((err) => {
-        console.error("Lỗi khi tải danh sách người dùng:", err);
-        setUsers([]);
-      });
+    const fetchOrders = fetch("http://localhost/DACS_Hutech/backend/get_all_orders.php")
+      .then(res => res.json());
 
-    // Fetch orders
-    fetch("http://localhost/DACS_Hutech/backend/get_orders.php")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.error) {
-          console.error("Lỗi:", data.message);
+    const fetchDrivers = fetch("http://localhost/DACS_Hutech/backend/get_drivers.php")
+      .then(res => res.json());
+
+    Promise.all([fetchOrders, fetchDrivers])
+      .then(([ordersData, driversData]) => {
+        if (ordersData.error) {
+          console.error("Lỗi khi tải đơn hàng:", ordersData.message);
           setOrders([]);
         } else {
-          setOrders(Array.isArray(data) ? data : []);
+          setOrders(Array.isArray(ordersData) ? ordersData : []);
         }
+
+        if (driversData.error) {
+          console.error("Lỗi khi tải tài xế:", driversData.error);
+          setDrivers([]);
+        } else {
+          setDrivers(Array.isArray(driversData) ? driversData : []);
+        }
+
         setLoading(false);
       })
-      .catch((err) => {
-        console.error("Lỗi khi tải đơn hàng:", err);
+      .catch(err => {
+        console.error("Lỗi tải dữ liệu:", err);
         setOrders([]);
+        setDrivers([]);
         setLoading(false);
       });
   }, []);
 
   const handleStatusChange = async (id, newStatus) => {
+    setStatusMessage(null);
     try {
       const res = await fetch("http://localhost/DACS_Hutech/backend/update_order_status.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus })
       });
-
       const result = await res.json();
       if (result.status === "success") {
         setOrders(prev =>
@@ -61,69 +62,66 @@ const OrderList = () => {
             order.id === id ? { ...order, status: newStatus } : order
           )
         );
+        setStatusMessage(`Cập nhật trạng thái đơn #${id} thành công.`);
       } else {
-        alert("Cập nhật thất bại: " + result.message);
+        alert("Cập nhật thất bại: " + (result.message || "Lỗi không xác định"));
       }
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái:", error);
+      alert("Có lỗi xảy ra khi cập nhật trạng thái.");
     }
   };
 
-  if (loading) return <p>Đang tải dữ liệu...</p>;
+  if (loading) {
+    return <p className="text-center text-gray-600">Đang tải dữ liệu...</p>;
+  }
 
   return (
-    <div className="space-y-8">
-      <h2 className="text-2xl font-bold text-gray-800">Danh sách khách hàng và đơn hàng</h2>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800">Danh sách đơn hàng</h2>
 
-      {users.length === 0 ? (
-        <p>Không có tài khoản khách hàng nào.</p>
+      {statusMessage && (
+        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+          {statusMessage}
+        </div>
+      )}
+
+      {orders.length === 0 ? (
+        <p>Không có đơn hàng nào.</p>
       ) : (
-        users.map((user) => {
-          const userOrders = orders.filter(order => order.user_id === user.id);
-          
+        orders.map(order => {
+          // Hiển thị tên tài xế nếu có, hoặc 'Chưa có tài xế'
+          const driverName = order.driver_name || "Chưa có tài xế";
+
           return (
-            <div key={user.id} className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <div className="border-b pb-4 mb-4">
-                <h3 className="text-xl font-semibold text-[#4e7cb2]">
-                  Khách hàng: {user.full_name}
-                </h3>
-                <p className="text-gray-600">Email: {user.email}</p>
-                <p className="text-gray-600">SĐT: {user.phone}</p>
+            <div key={order.id} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+              <div className="text-[#4e7cb2] font-semibold mb-2">
+                Đơn #{order.id} - {order.vehicle}
+              </div>
+              <div>Người gửi: {order.sender_name} - {order.sender_phone}</div>
+              <div>Người nhận: {order.receiver_name} - {order.receiver_phone}</div>
+              <div>Loại hàng: {order.goods_type} | Giá trị: {Number(order.goods_value).toLocaleString()} VNĐ</div>
+
+              <div className="mt-2">
+                Trạng thái:
+                <select
+                  className="ml-2 p-1 border rounded text-sm"
+                  value={order.status}
+                  onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                >
+                  {statusList.map(status => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
               </div>
 
-              {userOrders.length === 0 ? (
-                <p className="text-gray-500 italic">Chưa có đơn hàng nào</p>
-              ) : (
-                <div className="space-y-4">
-                  <h4 className="font-medium">Danh sách đơn hàng ({userOrders.length})</h4>
-                  {userOrders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="bg-gray-50 p-4 rounded border"
-                    >
-                      <div className="text-[#4e7cb2] font-semibold">
-                        Đơn #{order.id} - {order.vehicle}
-                      </div>
-                      <div>Người gửi: {order.sender_name} - {order.sender_phone}</div>
-                      <div>Người nhận: {order.receiver_name} - {order.receiver_phone}</div>
-                      <div>Loại hàng: {order.goods_type} | Giá trị: {order.goods_value.toLocaleString()} VNĐ</div>
-                      <div>
-                        Trạng thái: 
-                        <select
-                          className="ml-2 p-1 border rounded text-sm"
-                          value={order.status}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                        >
-                          {statusList.map((status) => (
-                            <option key={status} value={status}>{status}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="text-sm text-gray-500">Ngày tạo: {order.created_at}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="mt-2">
+                Tài xế: <span className="font-medium">{driverName}</span>
+              </div>
+
+              <div className="text-sm text-gray-500 mt-1">
+                Ngày tạo: {new Date(order.created_at).toLocaleString()}
+              </div>
             </div>
           );
         })

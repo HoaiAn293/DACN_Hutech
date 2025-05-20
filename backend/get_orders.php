@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-$allowed_origins = ['http://localhost:5173', 'http://localhost:5176'];
+$allowed_origins = ['http://localhost:5175'];
 $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
 
 if (in_array($origin, $allowed_origins)) {

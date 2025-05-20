@@ -3,6 +3,7 @@ import VehicleSelector from './VehicleSelector';
 import DeliveryInfo from './DeliveryInfo';
 import Sidebar from "./Sidebar";
 import DeliveryMap from '../Map/DeliveryMap';
+import ChatBot from '../ChatBot/ChatBot';
 
 const OrderPage = () => {
   const [selectedVehicle, setSelectedVehicle] = useState("");
@@ -67,6 +68,7 @@ const OrderPage = () => {
           </div>
         </div>
       </div>
+      <ChatBot />
     </div>
   );
 };

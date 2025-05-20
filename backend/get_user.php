@@ -34,8 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         $stmt->close();
     } else {
-        // Nếu không có ID => lấy tất cả user + employee
-        $sql = "SELECT id, full_name, email, phone_number, role, created_at FROM users WHERE role IN ('user', 'employee')";
+        // Nếu không có ID => lấy tất cả employee
+        $sql = "SELECT id, full_name, email, phone_number, role, created_at FROM users WHERE role IN ('employee')";
         $result = $conn->query($sql);
 
         if ($result && $result->num_rows > 0) {

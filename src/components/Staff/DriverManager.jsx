@@ -45,21 +45,33 @@ const DriverManager = () => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: name === "status" ? Number(value) : value });
   };
+
   const phoneRegex = /^0\d{9}$/;
-  const licenseRegex = /^[A-Za-z0-9]{8,}$/;
+
+  // Mở rộng regex số bằng lái cho phép chữ, số và dấu gạch ngang, tối thiểu 8 ký tự
+  const licenseRegex = /^[A-Za-z0-9\-]{8,}$/;
 
   const handleAddDriver = (e) => {
     e.preventDefault();
     setAdding(true);
     setError("");
+
     if (!phoneRegex.test(form.phone_number)) {
       setError("Số điện thoại phải bắt đầu bằng 0 và đủ 10 số.");
+      setAdding(false);
       return;
     }
-    if (!licenseRegex.test(form.license_number)) {
-      setError("Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ và số.");
+
+    // Loại bỏ dấu cách và gạch ngang trước khi kiểm tra
+    const cleanedLicense = form.license_number.replace(/[\s\-]/g, "");
+    if (!licenseRegex.test(cleanedLicense)) {
+      setError(
+        "Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ, số và dấu gạch ngang."
+      );
+      setAdding(false);
       return;
     }
+
     fetch("http://localhost/DACS_Hutech/backend/add_driver.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -81,7 +93,6 @@ const DriverManager = () => {
       });
   };
 
-  // Sửa
   const handleEditClick = (driver) => {
     setEditingId(driver.id);
     setEditForm({
@@ -102,14 +113,22 @@ const DriverManager = () => {
     e.preventDefault();
     setAdding(true);
     setError("");
+
     if (!phoneRegex.test(editForm.phone_number)) {
       setError("Số điện thoại phải bắt đầu bằng 0 và đủ 10 số.");
+      setAdding(false);
       return;
     }
-    if (!licenseRegex.test(editForm.license_number)) {
-      setError("Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ và số.");
+
+    const cleanedLicense = editForm.license_number.replace(/[\s\-]/g, "");
+    if (!licenseRegex.test(cleanedLicense)) {
+      setError(
+        "Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ, số và dấu gạch ngang."
+      );
+      setAdding(false);
       return;
     }
+
     fetch("http://localhost/DACS_Hutech/backend/update_driver.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -122,7 +141,7 @@ const DriverManager = () => {
           setEditingId(null);
           fetchDrivers();
         } else {
-          setError(data.error || "Cập nhật tài xế thất bại");
+          setError(data.message || data.error || "Cập nhật tài xế thất bại");
         }
       })
       .catch(() => {
@@ -131,7 +150,6 @@ const DriverManager = () => {
       });
   };
 
-  // Xóa
   const handleDeleteDriver = (id) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa tài xế này?")) return;
     setAdding(true);
@@ -198,8 +216,8 @@ const DriverManager = () => {
             required
             placeholder="Số bằng lái"
             className="border p-2 rounded"
-            pattern="^[A-Za-z0-9]{8,}$"
-            title="Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ và số."
+            pattern="^[A-Za-z0-9\-]{8,}$"
+            title="Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ, số và dấu gạch ngang."
           />
           <select
             name="vehicle_type"

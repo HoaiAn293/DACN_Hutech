@@ -50,7 +50,7 @@ const OrderList = () => {
   const handleStatusChange = async (id, newStatus) => {
     setStatusMessage(null);
     try {
-      const res = await fetch("http://localhost/DACS_Hutech/backend/update_order_status.php", {
+      const res = await fetch("http://localhost/DACS_Hutech/backend/update_order.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus })
@@ -72,6 +72,31 @@ const OrderList = () => {
     }
   };
 
+  const handleDriverChange = async (id, newDriverId) => {
+    setStatusMessage(null);
+    try {
+      const res = await fetch("http://localhost/DACS_Hutech/backend/update_order.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, driver_id: newDriverId ? parseInt(newDriverId) : null })
+      });
+      const result = await res.json();
+      if (result.status === "success") {
+        setOrders(prev =>
+          prev.map(order =>
+            order.id === id ? { ...order, driver_id: newDriverId ? parseInt(newDriverId) : null, driver_name: drivers.find(d => d.id === parseInt(newDriverId))?.full_name || null } : order
+          )
+        );
+        setStatusMessage(`Cập nhật tài xế cho đơn #${id} thành công.`);
+      } else {
+        alert("Cập nhật thất bại: " + (result.message || "Lỗi không xác định"));
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật tài xế:", error);
+      alert("Có lỗi xảy ra khi cập nhật tài xế.");
+    }
+  };
+
   if (loading) {
     return <p className="text-center text-gray-600">Đang tải dữ liệu...</p>;
   }
@@ -90,7 +115,6 @@ const OrderList = () => {
         <p>Không có đơn hàng nào.</p>
       ) : (
         orders.map(order => {
-          // Hiển thị tên tài xế nếu có, hoặc 'Chưa có tài xế'
           const driverName = order.driver_name || "Chưa có tài xế";
 
           return (
@@ -107,7 +131,7 @@ const OrderList = () => {
                 <select
                   className="ml-2 p-1 border rounded text-sm"
                   value={order.status}
-                  onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                  onChange={e => handleStatusChange(order.id, e.target.value)}
                 >
                   {statusList.map(status => (
                     <option key={status} value={status}>{status}</option>
@@ -116,7 +140,19 @@ const OrderList = () => {
               </div>
 
               <div className="mt-2">
-                Tài xế: <span className="font-medium">{driverName}</span>
+                Tài xế:
+                <select
+                  className="ml-2 p-1 border rounded text-sm"
+                  value={order.driver_id || ""}
+                  onChange={e => handleDriverChange(order.id, e.target.value)}
+                >
+                  <option value="">Chưa có tài xế</option>
+                  {drivers.map(driver => (
+                    <option key={driver.id} value={driver.id}>
+                      {driver.full_name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="text-sm text-gray-500 mt-1">

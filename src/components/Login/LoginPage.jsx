@@ -64,15 +64,23 @@ function LoginPage() {
           navigate('/order');
         }
       } else {
-        setErrors({
-          ...errors,
-          email: data.message
-        });
+        if (data.message.toLowerCase().includes('mật khẩu')) {
+          setErrors({
+            email: '',
+            password: data.message || 'Mật khẩu không chính xác'
+          });
+        } else {
+          setErrors({
+            email: data.message || 'Email không tồn tại',
+            password: ''
+          });
+        }
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Login error:', err);
       setErrors({
-        ...errors,
-        email: `Đã có lỗi xảy ra khi đăng nhập: ${error.message}`
+        email: '',
+        password: `Đã có lỗi xảy ra khi đăng nhập: ${err.message}`
       });
     }
   };
@@ -136,16 +144,17 @@ function LoginPage() {
         });
         setIsLogin(true);
       } else {
-        setErrors({
-          ...errors,
+        setErrors(prevErrors => ({
+          ...prevErrors,
           email: data.message || 'Đã có lỗi xảy ra khi đăng ký'
-        });
+        }));
       }
-    } catch (error) {
-      setErrors({
-        ...errors,
-        email: `Lỗi: ${error.message || 'Đã có lỗi xảy ra khi đăng ký'}`
-      });
+    } catch (err) {
+      console.error('Registration error:', err);
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        email: `Lỗi: ${err.message || 'Đã có lỗi xảy ra khi đăng ký'}`
+      }));
     }
 };
 

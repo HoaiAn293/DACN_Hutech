@@ -4,7 +4,7 @@ import OrderPage from './components/Bill/OrderPage';
 import HomePage from './components/Home/HomePage';
 import HistoryPage from './components/History/HistoryPage';
 import UserPage from './components/ProifleUser/UserPage';
-import StaffPage from './components/Staff/StafPage';
+import StaffPage from './components/Staff/StaffPage';
 import LoginPage from './components/Login/LoginPage';
 import AdminPage from './components/Admin/AdminPage';
 import { Navigate } from 'react-router-dom';

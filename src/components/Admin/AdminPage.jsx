@@ -16,10 +16,17 @@ const AdminPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [editingUser, setEditingUser] = useState(null);
+  const [stats, setStats] = useState({
+    total_employees: 0,
+    revenue: 0,
+    total_orders: 0,
+    pending_orders: 0,
+  });
   const usersPerPage = 5;
 
   useEffect(() => {
     fetchUsers();
+    fetchStats();
   }, []);
 
   const fetchUsers = async () => {
@@ -33,6 +40,18 @@ const AdminPage = () => {
       }
     } catch (err) {
       console.error("Lỗi khi lấy users:", err);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost/DACS_Hutech/backend/admin_stats.php"
+      );
+      const data = await res.json();
+      setStats(data);
+    } catch (err) {
+      console.error("Lỗi khi lấy thống kê:", err);
     }
   };
 
@@ -106,11 +125,15 @@ const AdminPage = () => {
     }
   };
 
-  const stats = [
-    { title: "Tổng nhân viên", value: users.length, icon: "👥" },
-    { title: "Doanh thu", value: "46,760.89 ₫", icon: "💰" },
-    { title: "Đơn hàng mới", value: "376", icon: "📦" },
-    { title: "Đang chờ xử lý", value: "35", icon: "⏳" },
+  const statsArr = [
+    { title: "Tổng nhân viên", value: stats.total_employees, icon: "👥" },
+    {
+      title: "Doanh thu",
+      value: stats.revenue.toLocaleString() + " ₫",
+      icon: "💰",
+    },
+    { title: "Đơn hàng mới", value: stats.total_orders, icon: "📦" },
+    { title: "Đang chờ xử lý", value: stats.pending_orders, icon: "⏳" },
   ];
 
   const handleLogout = () => {
@@ -142,7 +165,7 @@ const AdminPage = () => {
         </button>
       </div>
 
-      <AdminStats stats={stats} />
+      <AdminStats stats={statsArr} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <UserTable

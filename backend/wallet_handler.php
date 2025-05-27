@@ -41,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     if ($stmt->execute()) {
-        // Lưu lịch sử giao dịch
         $history = $conn->prepare("INSERT INTO transaction_history (user_id, type, amount) VALUES (?, ?, ?)");
         $history->bind_param("isi", $userId, $action, $amount);
         $history->execute();

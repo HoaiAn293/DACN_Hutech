@@ -7,6 +7,7 @@ import UserPage from './components/ProifleUser/UserPage';
 import StaffPage from './components/Staff/StaffPage';
 import LoginPage from './components/Login/LoginPage';
 import AdminPage from './components/Admin/AdminPage';
+import ChatBot from './components/ChatBot/ChatKey';
 import { Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -51,9 +52,18 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />}/>
-            <Route path="/order" element={<OrderPage />}/>
-            <Route path="/history" element={<HistoryPage />}/>
-            <Route path='/user' element={<UserPage />}/>
+            <Route path="/order" element={<>
+              <OrderPage />
+              <ChatBot />
+            </>}/>
+            <Route path="/history" element={<>
+              <HistoryPage />
+              <ChatBot />
+            </>}/>
+            <Route path='/user' element={<>
+              <UserPage />
+              <ChatBot />
+            </>}/>
             <Route 
               path="/staff" 
               element={

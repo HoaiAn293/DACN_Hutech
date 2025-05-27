@@ -10,7 +10,7 @@ const DeliveryInfo = ({
 }) => {
   const [selectedType, setSelectedType] = useState("");
   const [shippingFee, setShippingFee] = useState(0);
-  const [invoiceInfo, setInvoiceInfo] = useState(null);
+  const [_invoiceInfo, setInvoiceInfo] = useState(null);
 
   const [userId, setUserId] = useState(null);
 
@@ -21,7 +21,6 @@ const DeliveryInfo = ({
     }
   }, []);
 
-  // Pickup Info
   const [pickupAddressState, setPickupAddressState] = useState(
     pickupAddress || ""
   );
@@ -29,7 +28,6 @@ const DeliveryInfo = ({
   const [senderName, setSenderName] = useState("");
   const [senderPhone, setSenderPhone] = useState("");
 
-  // Delivery Info
   const [deliveryAddressState, setDeliveryAddressState] = useState(
     deliveryAddress || ""
   );
@@ -37,7 +35,7 @@ const DeliveryInfo = ({
   const [receiverName, setReceiverName] = useState("");
   const [receiverPhone, setReceiverPhone] = useState("");
   const [goodsValue, setGoodsValue] = useState("");
-  const [valueError, setValueError] = useState("");
+const [valueError, setValueError] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
 
@@ -437,18 +435,20 @@ const DeliveryInfo = ({
     }
   };
 
-  const formatCurrency = (value) => {
-    const numericValue = value.replace(/[^\d]/g, "");
-    const number = parseInt(numericValue, 10);
-
-    if (number > 30000000) {
-      setValueError("Tối đa 30.000.000");
-      return "30.000.000";
-    } else {
-      setValueError("");
+  const handleGoodsValueChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    if (value === '') {
+      setGoodsValue('');
+      setValueError('');
+      return;
     }
-
-    return number ? number.toLocaleString("vi-VN") : "";
+    const numericValue = parseInt(value);
+    if (numericValue > 30000000) {
+      setValueError('Tối đa 30.000.000 VNĐ');
+    } else {
+      setValueError('');
+    }
+    setGoodsValue(numericValue);
   };
 
   useEffect(() => {
@@ -676,17 +676,12 @@ const DeliveryInfo = ({
           <div className="relative">
             <div>
               <input
-                type="text"
-                placeholder="Giá trị hàng (VNĐ)"
-                value={goodsValue}
-                onChange={(e) => {
-                  const formattedValue = formatCurrency(e.target.value);
-                  setGoodsValue(formattedValue);
-                }}
-                className={`rounded-lg p-3 w-full bg-gray-50 border ${
-                  valueError ? "border-red-500" : "border-gray-300"
-                } focus:border-[#4e7cb2] focus:ring-1 focus:ring-[#4e7cb2] outline-none transition-all`}
-              />
+                  type="text"
+                  placeholder="Nhập giá trị hàng"
+                  value={goodsValue === '' ? '' : goodsValue.toLocaleString()}
+                  onChange={handleGoodsValueChange}
+                  className="rounded-lg p-3 w-full bg-gray-50 border border-gray-300 focus:border-[#4e7cb2] focus:ring-1 focus:ring-[#4e7cb2] outline-none transition-all"
+                />
               {errors.goodsValue && (
                 <p className="text-red-500 text-sm mt-1">
                   Vui lòng nhập giá trị hàng
@@ -694,7 +689,7 @@ const DeliveryInfo = ({
               )}
             </div>
             {valueError && (
-              <div className="absolute -bottom-6 right-0 bg-red-50 border border-red-200 text-red-700 px-3 py-1 rounded-md text-sm flex items-center gap-2 shadow-sm animate-bounce">
+              <div className="absolute -bottom-6 right-0 bg-red-50 border border-red-200 text-red-700 px-3 py-1 rounded-md text-sm flex items-center gap-2 shadow-sm ">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-4 w-4"
@@ -934,7 +929,7 @@ const DeliveryInfo = ({
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Giá trị hàng</span>
                     <span className="font-medium text-gray-800">
-                      {parseInt(goodsValue).toLocaleString()} VNĐ
+                      {goodsValue === '' ? '0' : goodsValue.toLocaleString()} VNĐ
                     </span>
                   </div>
                 </div>
@@ -984,7 +979,7 @@ const DeliveryInfo = ({
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Giá trị hàng</span>
                     <span className="font-medium text-gray-800">
-                      {parseInt(goodsValue).toLocaleString()} VNĐ
+                      {goodsValue === '' ? '0' : goodsValue.toLocaleString()} VNĐ
                     </span>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-gray-200">

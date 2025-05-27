@@ -34,7 +34,7 @@ const TabAll = () => {
         }
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(() => {
         setError("Không thể tải đơn hàng. Vui lòng thử lại sau.");
         setOrders([]);
         setLoading(false);

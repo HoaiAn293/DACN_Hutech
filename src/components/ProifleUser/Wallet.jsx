@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Wallet = () => {
   const [amount, setAmount] = useState("");
@@ -28,11 +30,31 @@ const Wallet = () => {
 
   const handleTransaction = async (action) => {
     if (!amount || isNaN(amount) || parseInt(amount) <= 0) {
-      alert('Vui lòng nhập số tiền hợp lệ!');
-      return;
-    }
-
-    if (!window.confirm(`Bạn có chắc chắn muốn ${action === 'deposit' ? 'nạp' : 'rút'} ${parseInt(amount).toLocaleString()} VNĐ không?`)) {
+      toast.error('Vui lòng nhập số tiền hợp lệ!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        className: "bg-red-50 text-red-700",
+        bodyClassName: "flex items-center gap-2",
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-red-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
+        ),
+      });
       return;
     }
 
@@ -48,52 +70,184 @@ const Wallet = () => {
       });
       const data = await response.json();
       if (data.success) {
-        alert(`${action === 'deposit' ? 'Nạp' : 'Rút'} tiền thành công!`);
+        toast.success(`${action === 'deposit' ? 'Nạp' : 'Rút'} tiền thành công!`, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          className: "bg-green-50 text-green-700",
+          bodyClassName: "flex items-center gap-2",
+          icon: (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-green-500"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+          ),
+        });
         setAmount("");
 
         // Cập nhật lại số dư
-        fetch(`http://localhost/DACS_Hutech/backend/get_balance.php?user_id=${user.id}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              setBalance(data.balance);
-            }
-          });
+        const balanceResponse = await fetch(`http://localhost/DACS_Hutech/backend/get_balance.php?user_id=${user.id}`);
+        const balanceData = await balanceResponse.json();
+        if (balanceData.success) {
+          setBalance(balanceData.balance);
+        }
       } else {
-        alert(data.message);
+        toast.error(data.message || 'Có lỗi xảy ra', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          className: "bg-red-50 text-red-700",
+          bodyClassName: "flex items-center gap-2",
+          icon: (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-red-500"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+          ),
+        });
       }
-    } catch (error) {
-      console.error('Lỗi:', error);
-      alert('Đã có lỗi xảy ra');
+    } catch (err) {
+      console.error('Lỗi:', err);
+      toast.error(`Đã có lỗi xảy ra: ${err.message}`, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+        style: {
+          backgroundColor: "#FEE2E2",
+          color: "#DC2626",
+          fontWeight: 500
+        },
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-red-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
+        )
+      });
     }
   };
 
   const handleDeposit = async () => {
     if (!amount || isNaN(amount) || parseInt(amount) <= 0) {
-      alert('Vui lòng nhập số tiền hợp lệ!');
+      toast.error('Vui lòng nhập số tiền hợp lệ!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        className: "bg-red-50 text-red-700",
+        bodyClassName: "flex items-center gap-2",
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-red-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
+        )
+      });
       return;
     }
 
     const formattedAmount = parseInt(amount).toLocaleString();
-    let message = `Vui lòng chuyển khoản ${formattedAmount} VNĐ với nội dung: NAP ${user.id}\n\n`;
-    
-    if (paymentMethod === 'bank') {
-      message += `Thông tin chuyển khoản:\nNgân hàng: ${bankInfo.bank}\nSố tài khoản: ${bankInfo.accountNumber}\nTên tài khoản: ${bankInfo.accountName}`;
-    } else if (paymentMethod === 'momo') {
-      message += `Số MoMo: ${bankInfo.accountNumber}\nTên tài khoản: ${bankInfo.accountName}`;
-    }
-
-    alert(message);
-    setAmount("");
+    toast.info(
+      <div>
+        <p>Bạn có chắc chắn muốn nạp {formattedAmount} VNĐ không?</p>
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={() => {
+              toast.dismiss();
+              handleTransaction('deposit');
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Xác nhận
+          </button>
+          <button
+            onClick={() => toast.dismiss()}
+            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+          >
+            Hủy
+          </button>
+        </div>
+      </div>,
+      {
+        position: "top-right",
+        autoClose: false,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: false,
+        progress: undefined,
+        className: "bg-blue-50 text-blue-700",
+        bodyClassName: "flex items-center gap-2",
+        icon: (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 text-blue-500"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clipRule="evenodd"
+            />
+          </svg>
+        )
+      }
+    );
   };
 
-  // Add this function to handle bank info updates
   const handleBankInfoUpdate = () => {
     setIsEditingBank(false);
-    // Here you could also add an API call to save the bank info
   };
 
-  // In the return statement, update the bank info display section:
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-800">Nạp / Rút tiền</h2>
@@ -122,8 +276,7 @@ const Wallet = () => {
             }`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-              <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+              <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
             </svg>
             Ngân hàng
           </button>

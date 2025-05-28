@@ -11,13 +11,11 @@ if (in_array($origin, $allowed_origins)) {
     header("Access-Control-Allow-Headers: Content-Type");
     header("Content-Type: application/json");
 } else {
-    // Không cho phép origin lạ
     http_response_code(403);
     echo json_encode(["error" => true, "message" => "Origin not allowed"]);
     exit;
 }
 
-// Xử lý preflight request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
@@ -42,9 +40,11 @@ try {
                 i.amount AS invoice_amount, 
                 i.payment_method AS invoice_payment_method, 
                 i.status AS invoice_status, 
-                i.created_at AS invoice_created_at
+                i.created_at AS invoice_created_at,
+                d.full_name AS drivers_name
             FROM orders o
             LEFT JOIN invoices i ON o.id = i.order_id
+            LEFT JOIN drivers d ON d.id = o.driver_id
             WHERE o.user_id = ?";
     $params = [$user_id];
     $types = "i";

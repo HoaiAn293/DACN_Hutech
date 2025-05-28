@@ -48,8 +48,7 @@ const DriverManager = () => {
 
   const phoneRegex = /^0\d{9}$/;
 
-  // Mở rộng regex số bằng lái cho phép chữ, số và dấu gạch ngang, tối thiểu 8 ký tự
-  const licenseRegex = /^[A-Za-z0-9\-]{8,}$/;
+  const licenseRegex = /^[A-Za-z0-9-]{8,}$/;
 
   const handleAddDriver = (e) => {
     e.preventDefault();
@@ -63,7 +62,7 @@ const DriverManager = () => {
     }
 
     // Loại bỏ dấu cách và gạch ngang trước khi kiểm tra
-    const cleanedLicense = form.license_number.replace(/[\s\-]/g, "");
+    const cleanedLicense = form.license_number.replace(/[\s-]/g, "");
     if (!licenseRegex.test(cleanedLicense)) {
       setError(
         "Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ, số và dấu gạch ngang."
@@ -120,7 +119,7 @@ const DriverManager = () => {
       return;
     }
 
-    const cleanedLicense = editForm.license_number.replace(/[\s\-]/g, "");
+    const cleanedLicense = editForm.license_number.replace(/[\s-]/g, "");
     if (!licenseRegex.test(cleanedLicense)) {
       setError(
         "Số bằng lái phải có ít nhất 8 ký tự, chỉ gồm chữ, số và dấu gạch ngang."

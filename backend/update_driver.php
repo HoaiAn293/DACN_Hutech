@@ -2,14 +2,12 @@
 session_start();
 require_once 'database.php';
 
-// Thiết lập các header CORS
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Accept");
 header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json");
 
-// Xử lý request OPTIONS (preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -37,6 +35,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         empty($vehicle_type)
     ) {
         echo json_encode(["success" => false, "message" => "Vui lòng điền đầy đủ thông tin!"]);
+        exit();
+    }
+
+    if (!preg_match('/^0\d{9}$/', $phone_number)) {
+        echo json_encode(["success" => false, "message" => "Số điện thoại không hợp lệ!"]);
+        exit();
+    }
+
+    if (!preg_match('/^\d{12}$/', $cccd)) {
+        echo json_encode(["success" => false, "message" => "Số CCCD không hợp lệ!"]);
+        exit();
+    }
+
+    if (strlen($full_name) > 100) {
+        echo json_encode(["success" => false, "message" => "Tên tài xế quá dài!"]);
         exit();
     }
 

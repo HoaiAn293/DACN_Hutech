@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import OrderList from "./OrderList";
-import CustomerList from "./CustomerList";
 import PerformanceChart from "./PerformanceChart";
 import DriverManager from "./DriverManager";
 
@@ -14,8 +13,6 @@ const StaffPage = () => {
         return <OrderList />;
       case "drivers":
         return <DriverManager />;
-      case "customers":
-        return <CustomerList />;
       case "dashboard":
       default:
         return <PerformanceChart />;

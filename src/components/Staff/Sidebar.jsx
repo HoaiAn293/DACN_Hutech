@@ -29,7 +29,6 @@ const Sidebar = ({ onSelect, selectedTab }) => {
       { icon: "📄", label: "Đơn hàng", key: "orders" },
       { icon: "📊", label: "Dashboards", key: "dashboard" },
       { icon: "👤", label: "Tài xế", key: "drivers" },
-      { icon: "📘", label: "Khách hàng", key: "customers" },
     ];
   
     return (
@@ -37,7 +36,7 @@ const Sidebar = ({ onSelect, selectedTab }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <div className="flex items-center space-x-2">
-            {isOpen && <span className="text-sm">Khách</span>}
+            {isOpen && <span className="text-sm">Nhân viên</span>}
           </div>
           <button onClick={toggleSidebar} className="text-2xl text-white">{isOpen ? "×" : "≡"}</button>
         </div>

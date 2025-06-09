@@ -27,7 +27,7 @@ const Sidebar = ({ onSelect, selectedTab }) => {
   
     const menuItems = [
       { icon: "📄", label: "Đơn hàng", key: "orders" },
-      { icon: "📊", label: "Dashboards", key: "dashboard" },
+      { icon: "📊", label: "Thống kê", key: "dashboard" },
       { icon: "👤", label: "Tài xế", key: "drivers" },
     ];
   

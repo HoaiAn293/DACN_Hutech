@@ -23,32 +23,76 @@ ChartJS.register(
 
 const PerformanceChart = () => {
   const [orderStats, setOrderStats] = useState({
-    totalOrders: 90,
+    totalOrders: 0,
     ordersByStatus: {
-      'Chờ xác nhận':10,
-      'Đang giao': 20,
-      'Đã nhận': 30,
-      'Hoàn tất': 20,
-      'Đã huỷ': 2
+      'Chờ xác nhận': 0,
+      'Đang giao': 0,
+      'Đã nhận': 0,
+      'Hoàn tất': 0,
+      'Đã huỷ': 0
     }
   });
-  const [userCount, setUserCount] = useState(0);
+  const [userStats, setUserStats] = useState({
+    users: 0,
+    drivers: 0
+  });
 
   useEffect(() => {
-    fetch('http://localhost/DACS_Hutech/backend/admin_stats.php')
+    // Fetch orders data
+    fetch('http://localhost/DACS_Hutech/backend/get_all_orders.php')
       .then(res => res.json())
-      .then(data => {
-        if (data.orders) {
+      .then(orders => {
+        if (Array.isArray(orders)) {
+          const statusCounts = orders.reduce((acc, order) => {
+            acc[order.status] = (acc[order.status] || 0) + 1;
+            return acc;
+          }, {
+            'Chờ xác nhận': 0,
+            'Đang giao': 0,
+            'Đã nhận': 0,
+            'Hoàn tất': 0,
+            'Đã huỷ': 0
+          });
+
           setOrderStats({
-            totalOrders: data.orders.total,
-            ordersByStatus: data.orders.byStatus
+            totalOrders: orders.length,
+            ordersByStatus: statusCounts
           });
         }
-        if (data.users) {
-          setUserCount(data.users.total);
-        }
       })
-      .catch(err => console.error('Error fetching statistics:', err));
+      .catch(err => {
+        console.error('Error fetching orders:', err);
+        setOrderStats({
+          totalOrders: 0,
+          ordersByStatus: {
+            'Chờ xác nhận': 0,
+            'Đang giao': 0,
+            'Đã nhận': 0,
+            'Hoàn tất': 0,
+            'Đã huỷ': 0
+          }
+        });
+      });
+
+    // Fetch users data
+    Promise.all([
+      fetch('http://localhost/DACS_Hutech/backend/get_user.php').then(res => res.json()),
+      fetch('http://localhost/DACS_Hutech/backend/get_drivers.php').then(res => res.json())
+    ])
+      .then(([users, drivers]) => {
+        // Lọc user có role là "user"
+        const normalUsers = Array.isArray(users)
+          ? users.filter(u => u.role === "user").length
+          : 0;
+        setUserStats({
+          users: normalUsers,
+          drivers: Array.isArray(drivers) ? drivers.length : 0
+        });
+      })
+      .catch(err => {
+        console.error('Error fetching user stats:', err);
+        setUserStats({ users: 0, drivers: 0 });
+      });
   }, []);
 
   const orderChartData = {
@@ -70,6 +114,24 @@ const PerformanceChart = () => {
           'rgba(255, 206, 86, 1)',
           'rgba(75, 192, 192, 1)',
           'rgba(153, 102, 255, 1)'
+        ],
+        borderWidth: 1
+      }
+    ]
+  };
+
+  const userChartData = {
+    labels: ['Người dùng', 'Tài xế'],
+    datasets: [
+      {
+        data: [userStats.users, userStats.drivers],
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.5)',
+          'rgba(255, 99, 132, 0.5)'
+        ],
+        borderColor: [
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 99, 132, 1)'
         ],
         borderWidth: 1
       }
@@ -101,10 +163,19 @@ const PerformanceChart = () => {
         </div>
 
         <div className="bg-white shadow-lg rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">Thống kê người dùng</h3>
+          <h3 className="text-lg font-semibold">Thống kê người dùng và tài xế</h3>
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="text-4xl font-bold text-blue-600">{userCount}</div>
-            <div className="text-gray-600 mt-2">Tổng số tài khoản người dùng</div>
+            <Pie
+              data={userChartData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  }
+                }
+              }}
+            />
           </div>
         </div>
       </div>

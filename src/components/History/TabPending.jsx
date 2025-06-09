@@ -6,6 +6,12 @@ const TabPending = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Thêm state cho modal nhập lý do hủy
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelOrderId, setCancelOrderId] = useState(null);
+  const [cancelError, setCancelError] = useState("");
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user) return;
@@ -20,89 +26,56 @@ const TabPending = () => {
         toast.error("Lỗi khi tải đơn hàng. Vui lòng thử lại sau.", {
           position: "top-right",
           autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
           className: 'bg-red-50 text-red-700',
-          bodyClassName: 'flex items-center gap-2',
-          icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          )
         });
         setLoading(false);
       });
   }, []);
 
-  const handleCancel = async (orderId) => {
-    if (window.confirm('Bạn có chắc muốn hủy đơn hàng này?')) {
-      try {
-        const response = await fetch('http://localhost/DACS_Hutech/backend/cancel_order.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ order_id: orderId })
-        });
-        
-        const result = await response.json();
-        if (result.success) {
-          toast.success('Hủy đơn hàng thành công', {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            className: 'bg-green-50 text-green-700',
-            bodyClassName: 'flex items-center gap-2',
-            icon: (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            )
-          });
-          setOrders(orders.filter(order => order.id !== orderId));
-        } else {
-          toast.error(result.message || 'Có lỗi xảy ra khi hủy đơn hàng', {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            className: 'bg-red-50 text-red-700',
-            bodyClassName: 'flex items-center gap-2',
-            icon: (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            )
-          });
-        }
-      } catch {  // Removed unused 'error' parameter
-        toast.error('Có lỗi xảy ra khi hủy đơn hàng', {
+  // Khi nhấn nút hủy
+  const handleCancelClick = (orderId) => {
+    setCancelOrderId(orderId);
+    setShowCancelModal(true);
+    setCancelReason("");
+    setCancelError("");
+  };
+
+  // Khi xác nhận hủy
+  const handleConfirmCancel = async () => {
+    if (!cancelReason.trim()) {
+      setCancelError("Vui lòng nhập lý do hủy đơn hàng!");
+      return;
+    }
+    try {
+      const response = await fetch('http://localhost/DACS_Hutech/backend/cancel_order.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ order_id: cancelOrderId, reason: cancelReason })
+      });
+      const result = await response.json();
+      if (result.success) {
+        toast.success('Hủy đơn hàng thành công', {
           position: "top-right",
           autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
+          className: 'bg-green-50 text-green-700',
+        });
+        setOrders(orders.filter(order => order.id !== cancelOrderId));
+        setShowCancelModal(false);
+      } else {
+        toast.error(result.message || 'Có lỗi xảy ra khi hủy đơn hàng', {
+          position: "top-right",
+          autoClose: 3000,
           className: 'bg-red-50 text-red-700',
-          bodyClassName: 'flex items-center gap-2',
-          icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          )
         });
       }
+    } catch {
+      toast.error('Có lỗi xảy ra khi hủy đơn hàng', {
+        position: "top-right",
+        autoClose: 3000,
+        className: 'bg-red-50 text-red-700',
+      });
     }
   };
 
@@ -257,9 +230,10 @@ const TabPending = () => {
               </div>
             </div>
 
+         
             <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end">
               <button
-                onClick={() => handleCancel(order.id)}
+                onClick={() => handleCancelClick(order.id)}
                 className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
               >
                 Hủy đơn hàng
@@ -268,6 +242,42 @@ const TabPending = () => {
           </div>
         </div>
       ))}
+
+      {/* Modal nhập lý do hủy */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+            <h3 className="text-lg font-semibold mb-3 text-[#1a365d]">Nhập lý do hủy đơn hàng</h3>
+            <textarea
+              className="w-full border rounded-lg p-2 focus:border-[#4e7cb2] focus:ring-1 focus:ring-[#4e7cb2] outline-none"
+              rows={3}
+              value={cancelReason}
+              onChange={e => {
+                setCancelReason(e.target.value);
+                setCancelError("");
+              }}
+              placeholder="Nhập lý do hủy đơn..."
+            />
+            {cancelError && (
+              <p className="text-red-500 text-sm mt-1">{cancelError}</p>
+            )}
+            <div className="flex gap-2 mt-4 justify-end">
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                onClick={handleConfirmCancel}
+              >
+                Xác nhận hủy
+              </button>
+              <button
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+                onClick={() => setShowCancelModal(false)}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

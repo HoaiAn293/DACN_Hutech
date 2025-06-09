@@ -8,13 +8,14 @@ const initialForm = {
   vehicle_type: "Xe bán tải",
   note: "",
   status: 1,
+  image: null, 
 };
 
-const vehicleOptions = ["Xe bán tải", "Xe van", "Xe máy"];
+const vehicleOptions = ["Xe bán tải", "Xe van", "Xe máy", "Xe tải"];
 
 const statusOptions = [
   { value: 1, label: "Hoạt động" },
-  { value: 0, label: "Không hoạt động" },
+  { value: 0, label: "Không hoạt động"},
 ];
 
 const DriverManager = () => {
@@ -61,7 +62,6 @@ const DriverManager = () => {
       return;
     }
 
-    // Loại bỏ dấu cách và gạch ngang trước khi kiểm tra
     const cleanedLicense = form.license_number.replace(/[\s-]/g, "");
     if (!licenseRegex.test(cleanedLicense)) {
       setError(
@@ -71,10 +71,18 @@ const DriverManager = () => {
       return;
     }
 
+    const formData = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      if (key === "image" && value) {
+        formData.append("image", value);
+      } else {
+        formData.append(key, value);
+      }
+    });
+
     fetch("http://localhost/DACS_Hutech/backend/add_driver.php", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: formData,
     })
       .then((res) => res.json())
       .then((data) => {
@@ -128,11 +136,30 @@ const DriverManager = () => {
       return;
     }
 
-    fetch("http://localhost/DACS_Hutech/backend/update_driver.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editForm),
-    })
+    let body;
+    let url = "http://localhost/DACS_Hutech/backend/update_driver.php";
+    let options = {};
+
+    if (editForm.image) {
+      body = new FormData();
+      Object.entries(editForm).forEach(([key, value]) => {
+        if (key === "image" && value) {
+          body.append("image", value);
+        } else {
+          body.append(key, value);
+        }
+      });
+      options = { method: "POST", body };
+    } else {
+      body = JSON.stringify(editForm);
+      options = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      };
+    }
+
+    fetch(url, options)
       .then((res) => res.json())
       .then((data) => {
         setAdding(false);
@@ -250,6 +277,12 @@ const DriverManager = () => {
               </option>
             ))}
           </select>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => setForm({ ...form, image: e.target.files[0] })}
+            className="border p-2 rounded"
+          />
         </div>
         <button
           type="submit"
@@ -267,25 +300,26 @@ const DriverManager = () => {
         ) : drivers.length === 0 ? (
           <p>Hiện chưa có tài xế nào trong hệ thống.</p>
         ) : (
-          <table className="min-w-full border-collapse">
-            <thead>
+          <table className="min-w-full border-collapse rounded-xl overflow-hidden shadow">
+            <thead className="bg-blue-50">
               <tr>
-                <th className="px-4 py-2 border">ID</th>
-                <th className="px-4 py-2 border">Tên tài xế</th>
-                <th className="px-4 py-2 border">Số điện thoại</th>
-                <th className="px-4 py-2 border">CCCD</th>
-                <th className="px-4 py-2 border">Số bằng lái</th>
-                <th className="px-4 py-2 border">Loại xe</th>
-                <th className="px-4 py-2 border">Ngày tạo</th>
-                <th className="px-4 py-2 border">Ghi chú</th>
-                <th className="px-4 py-2 border">Trạng thái</th>
-                <th className="px-4 py-2 border">Thao tác</th>
+                <th className="px-4 py-3 border text-center">ID</th>
+                <th className="px-4 py-3 border text-center">Ảnh</th>
+                <th className="px-4 py-3 border text-center">Tên tài xế</th>
+                <th className="px-4 py-3 border text-center">Số điện thoại</th>
+                <th className="px-4 py-3 border text-center">CCCD</th>
+                <th className="px-4 py-3 border text-center">Số bằng lái</th>
+                <th className="px-4 py-3 border text-center">Loại xe</th>
+                <th className="px-4 py-3 border text-center">Ngày tạo</th>
+                <th className="px-4 py-3 border text-center">Ghi chú</th>
+                <th className="px-4 py-3 border text-center">Trạng thái</th>
+                <th className="px-4 py-3 border text-center">Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {drivers.map((driver) =>
                 editingId === driver.id ? (
-                  <tr key={driver.id} className="bg-yellow-50">
+                  <tr key={driver.id} className="bg-yellow-50 hover:bg-yellow-100 transition">
                     <td className="px-4 py-2 border">{driver.id}</td>
                     <td className="px-4 py-2 border">
                       <input
@@ -371,6 +405,14 @@ const DriverManager = () => {
                         Hủy
                       </button>
                     </td>
+                    <td className="px-4 py-2 border">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={e => setEditForm({ ...editForm, image: e.target.files[0] })}
+                        className="border p-1 rounded w-full"
+                      />
+                    </td>
                   </tr>
                 ) : (
                   <tr key={driver.id}>
@@ -441,6 +483,20 @@ const DriverManager = () => {
                       >
                         Xóa
                       </button>
+                    </td>
+                    <td className="px-4 py-2 border">
+                      <img
+                        src={
+                          driver.image_url
+                            ? driver.image_url.startsWith("http")
+                              ? driver.image_url
+                              : `http://localhost/DACS_Hutech/${driver.image_url.replace(/^\/+/, "")}`
+                            : "https://ui-avatars.com/api/?name=TX&background=eee&color=888"
+                        }
+                        alt="Ảnh tài xế"
+                        className="w-12 h-12 object-cover rounded-full mx-auto border"
+                        onError={e => { e.target.src = "https://ui-avatars.com/api/?name=TX&background=eee&color=888"; }}
+                      />
                     </td>
                   </tr>
                 )

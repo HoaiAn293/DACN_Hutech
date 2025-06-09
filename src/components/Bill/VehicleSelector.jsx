@@ -6,28 +6,28 @@ import "swiper/css/pagination";
 import { Navigation, Pagination } from "swiper/modules";
 
 const vehicles = [
-  {
-    label: "Xe Máy",
-    image: "/img/xe-may.jpg",
-    maxWeight: 30,
-    pricePerKm: 5000,
-    baseFee: 15000,
-    description: "Phù hợp cho hàng hóa nhỏ gọn"
-  },
-  {
-    label: "Xe Van", 
-    image: "/img/xe-van.jpg",
-    maxWeight: 500,
-    pricePerKm: 10000,
-    baseFee: 25000,
-    description: "Thích hợp cho hàng hóa cỡ vừa, nội thành"
-  },
-  {
-    label: "Xe Bán Tải",
-    image: "/img/xe-ban-tai.jpg", 
-    maxWeight: 1000,
-    pricePerKm: 15000,
-    baseFee: 35000,
+	{
+		label: "Xe Máy",
+		image: "/img/xe-may.jpg",
+		maxWeight: 30,
+		pricePerKm: 5000,
+		baseFee: 15000,
+		description: "Phù hợp cho hàng hóa nhỏ gọn",
+	},
+	{
+		label: "Xe Van",
+		image: "/img/xe-van.jpg",
+		maxWeight: 500,
+		pricePerKm: 10000,
+		baseFee: 25000,
+		description: "Thích hợp cho hàng hóa cỡ vừa, nội thành",
+	},
+	{
+		label: "Xe Bán Tải",
+		image: "/img/xe-ban-tai.jpg",
+		maxWeight: 1000,
+		pricePerKm: 15000,
+		baseFee: 35000,
     description: "Phù hợp cho hàng hóa số lượng lớn"
   },
   {
@@ -58,6 +58,7 @@ const VehicleSelector = ({ onSelect }) => {
           modules={[Navigation, Pagination]}
           spaceBetween={20}
           slidesPerView={2}
+          navigation
           breakpoints={{
             640: {
               slidesPerView: 2,

@@ -16,16 +16,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $json = file_get_contents('php://input');
-    $data = json_decode($json, true);
+    // Kiểm tra nếu là multipart/form-data (có file)
+    if (isset($_FILES['image'])) {
+        $uploadDir = __DIR__ . '/../uploads/drivers/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+        $imageName = uniqid('driver_') . '_' . basename($_FILES['image']['name']);
+        $targetFile = $uploadDir . $imageName;
+        $imageUrl = 'uploads/drivers/' . $imageName; 
 
-    $full_name = $data['full_name'] ?? '';
-    $phone_number = $data['phone_number'] ?? '';
-    $cccd = $data['cccd'] ?? '';
-    $license_number = $data['license_number'] ?? '';
-    $vehicle_type = $data['vehicle_type'] ?? '';
-    $note = $data['note'] ?? '';
-    $status = isset($data['status']) ? intval($data['status']) : 1;
+        if (!move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
+            echo json_encode(["success" => false, "message" => "Tải ảnh lên thất bại!"]);
+            exit();
+        }
+    } else {
+        $imageUrl = null;
+    }
+
+    // Lấy dữ liệu từ form
+    $full_name = $_POST['full_name'] ?? '';
+    $phone_number = $_POST['phone_number'] ?? '';
+    $cccd = $_POST['cccd'] ?? '';
+    $license_number = $_POST['license_number'] ?? '';
+    $vehicle_type = $_POST['vehicle_type'] ?? '';
+    $note = $_POST['note'] ?? '';
+    $status = isset($_POST['status']) ? intval($_POST['status']) : 1;
 
     if (
         empty($full_name) ||
@@ -38,19 +54,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    // Chuẩn bị câu lệnh SQL (có thêm trường status)
-    $sql = "INSERT INTO drivers (full_name, phone_number, cccd, license_number, vehicle_type, note, status) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    // Thêm ảnh vào SQL nếu có
+    $sql = "INSERT INTO drivers (full_name, phone_number, cccd, license_number, vehicle_type, note, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssssi", $full_name, $phone_number, $cccd, $license_number, $vehicle_type, $note, $status);
+    $stmt->bind_param("ssssssis", $full_name, $phone_number, $cccd, $license_number, $vehicle_type, $note, $status, $imageUrl);
 
-    // Thực thi câu lệnh SQL
     if ($stmt->execute()) {
         echo json_encode(["success" => true, "message" => "Tạo tài xế thành công!"]);
     } else {
         echo json_encode(["success" => false, "message" => "Đã có lỗi xảy ra khi lưu vào cơ sở dữ liệu."]);
     }
 
-    // Đóng statement và connection
     $stmt->close();
     $conn->close();
 }

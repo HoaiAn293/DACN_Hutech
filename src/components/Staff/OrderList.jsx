@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const OrderList = () => {
   const [orders, setOrders] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusMessage, setStatusMessage] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-
   const statusList = [
     "Chờ xác nhận",
     "Đang giao",
@@ -57,25 +56,25 @@ const OrderList = () => {
         
         if (text.includes('Fatal error') || text.includes('<br />')) {
           console.error('PHP Error:', text);
-          setStatusMessage('Lỗi server: Vui lòng kiểm tra logs');
+          toast.error('Lỗi server: Vui lòng kiểm tra logs');
           return [];
         }
         
         try {
           const data = JSON.parse(text);
           if (data.error) {
-            setStatusMessage(data.message || 'Có lỗi xảy ra');
+            toast.error(data.message || 'Có lỗi xảy ra');
             return [];
           }
           return Array.isArray(data) ? data : [];
         } catch (error) {
           console.error('Invalid JSON response:', text, '\nError:', error);
-          setStatusMessage('Lỗi khi xử lý dữ liệu từ server');
+          toast.error('Lỗi khi xử lý dữ liệu từ server');
           return [];
         }
       } catch (error) {
         console.error('Error fetching orders:', error);
-        setStatusMessage('Không thể tải dữ liệu đơn hàng');
+        toast.error('Không thể tải dữ liệu đơn hàng');
         return [];
       }
     };
@@ -84,6 +83,7 @@ const OrderList = () => {
       .then(res => res.json())
       .catch(err => {
         console.error("Lỗi khi tải tài xế:", err);
+        toast.error("Không thể tải danh sách tài xế");
         return [];
       });
   
@@ -94,6 +94,7 @@ const OrderList = () => {
       })
       .catch(err => {
         console.error("Lỗi tải dữ liệu:", err);
+        toast.error("Có lỗi xảy ra khi tải dữ liệu");
         setOrders([]);
         setDrivers([]);
       })
@@ -101,7 +102,6 @@ const OrderList = () => {
   }, []);
   
   const handleStatusChange = async (id, newStatus) => {
-    setStatusMessage(null);
     try {
       const res = await fetch("http://localhost/DACS_Hutech/backend/update_order_status.php", {
         method: "POST",
@@ -113,29 +113,28 @@ const OrderList = () => {
         const response = await fetch('http://localhost/DACS_Hutech/backend/get_all_orders.php');
         const data = await response.json();
         setOrders(Array.isArray(data) ? data : []);
-        setStatusMessage({
-          type: 'success',
-          text: `Cập nhật trạng thái đơn #${id} thành công.`
-        });
-        setTimeout(() => setStatusMessage(null), 3000);
+        toast.success(`Cập nhật trạng thái đơn #${id} thành công.`);
       } else {
-        setStatusMessage({
-          type: 'error',
-          text: "Cập nhật thất bại: " + (result.message || "Lỗi không xác định")
-        });
+        toast.error("Cập nhật thất bại: " + (result.message || "Lỗi không xác định"));
       }
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái:", error);
-      setStatusMessage({
-        type: 'error',
-        text: "Có lỗi xảy ra khi cập nhật trạng thái."
-      });
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái.");
     }
   };
 
   const handleDriverChange = async (id, newDriverId) => {
-    setStatusMessage(null);
     try {
+      const hasActiveOrder = orders.some(order => 
+        order.driver_id === parseInt(newDriverId) && 
+        (order.status === "Đang giao" || order.status === "Chờ xác nhận")
+      );
+
+      if (hasActiveOrder) {
+        toast.error("Tài xế này đang có đơn hàng chưa hoàn thành. Vui lòng chọn tài xế khác.");
+        return;
+      }
+
       const res = await fetch("http://localhost/DACS_Hutech/backend/update_order_status.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -152,23 +151,33 @@ const OrderList = () => {
             } : order
           )
         );
-        setStatusMessage({
-          type: 'success',
-          text: `Cập nhật tài xế cho đơn #${id} thành công.`
-        });
-        setTimeout(() => setStatusMessage(null), 3000);
+        toast.success(`Cập nhật tài xế cho đơn #${id} thành công.`);
       } else {
-        setStatusMessage({
-          type: 'error',
-          text: "Cập nhật thất bại: " + (result.message || "Lỗi không xác định")
-        });
+        toast.error("Cập nhật thất bại: " + (result.message || "Lỗi không xác định"));
       }
     } catch (error) {
       console.error("Lỗi khi cập nhật tài xế:", error);
-      setStatusMessage({
-        type: 'error',
-        text: "Có lỗi xảy ra khi cập nhật tài xế."
+      toast.error("Có lỗi xảy ra khi cập nhật tài xế.");
+    }
+  };
+
+  const handleDeleteOrder = async (id) => {
+    try {
+      const res = await fetch("http://localhost/DACS_Hutech/backend/delete_order.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
       });
+      const result = await res.json();
+      if (result.status === "success") {
+        setOrders(prev => prev.filter(order => order.id !== id));
+        toast.success(`Đã xóa đơn hàng #${id} thành công.`);
+      } else {
+        toast.error("Xóa thất bại: " + (result.message || "Lỗi không xác định"));
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa đơn hàng:", error);
+      toast.error("Có lỗi xảy ra khi xóa đơn hàng.");
     }
   };
 
@@ -185,10 +194,13 @@ const OrderList = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-          <p className="text-lg text-gray-600">Đang tải dữ liệu...</p>
+      <div className="space-y-8">
+        <ToastContainer position="top-right" autoClose={3000} />
+        <div className="flex items-center justify-center min-h-96">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <p className="text-lg text-gray-600">Đang tải dữ liệu...</p>
+          </div>
         </div>
       </div>
     );
@@ -196,6 +208,7 @@ const OrderList = () => {
 
   return (
     <div className="space-y-8">
+      <ToastContainer position="top-right" autoClose={3000} />
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a365d] to-[#2d5a9e] rounded-2xl p-8 text-white">
         <h2 className="text-3xl font-bold mb-2">Quản lý đơn hàng</h2>
@@ -244,29 +257,6 @@ const OrderList = () => {
           </div>
         </div>
       </div>
-
-      {/* Status Message */}
-      {statusMessage && (
-        <div className={`p-4 rounded-xl border ${
-          statusMessage.type === 'success' 
-            ? 'bg-green-50 border-green-200 text-green-800' 
-            : 'bg-red-50 border-red-200 text-red-800'
-        }`}>
-          <div className="flex items-center gap-2">
-            {statusMessage.type === 'success' ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            )}
-            {statusMessage.text}
-          </div>
-        </div>
-      )}
-
       {/* Orders List */}
       {filteredOrders.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
@@ -296,12 +286,14 @@ const OrderList = () => {
                   <span className="text-sm text-white/80">
                     Người đặt: <span className="font-semibold">{order.sender_name}</span>
                   </span>
+                 
                 </div>
               </div>
 
               {/* Content */}
               <div className="p-8">
                 {/* Customer Information */}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
                     <div className="text-sm text-gray-600 font-medium mb-3">
@@ -396,7 +388,7 @@ const OrderList = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="pt-6 border-t border-gray-200">
+                <div className="pt-6 border-t border-gray-200 flex justify-between">
                   <div className="flex items-center gap-2 text-gray-600">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -414,7 +406,50 @@ const OrderList = () => {
                     </svg>
                     Ngày tạo: {new Date(order.created_at).toLocaleString('vi-VN')}
                   </div>
+                  {order.status === "Đã huỷ" && (
+                    <button
+                      onClick={() => {
+                        toast.info(
+                          <div className="flex flex-col gap-4">
+                            <p>Bạn có chắc chắn muốn xóa đơn hàng #{order.id}?</p>
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => {
+                                  toast.dismiss();
+                                  handleDeleteOrder(order.id);
+                                }}
+                                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                              >
+                                Xóa
+                              </button>
+                              <button
+                                onClick={() => toast.dismiss()}
+                                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                Hủy
+                              </button>
+                            </div>
+                          </div>,
+                          {
+                            autoClose: false,
+                            closeButton: false,
+                            closeOnClick: false,
+                            draggable: false
+                          }
+                        );
+                      }}
+                      className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                    >
+                      Xóa đơn
+                    </button>
+                  )}
                 </div>
+                {order.status === "Đã huỷ" && order.cancel_reason && (
+                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded text-red-700">
+                    <span className="font-semibold">Lý do hủy đơn: </span>
+                    {order.cancel_reason}
+                  </div>
+                )}
               </div>
             </div>
           ))}

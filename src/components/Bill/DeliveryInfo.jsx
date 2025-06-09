@@ -35,7 +35,7 @@ const DeliveryInfo = ({
   const [receiverName, setReceiverName] = useState("");
   const [receiverPhone, setReceiverPhone] = useState("");
   const [goodsValue, setGoodsValue] = useState("");
-const [valueError, setValueError] = useState("");
+  const [valueError, setValueError] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
 
@@ -76,7 +76,7 @@ const [valueError, setValueError] = useState("");
       receiverName: !receiverName.trim(),
       receiverPhone: !receiverPhone.trim() || !isValidPhone(receiverPhone),
       selectedType: !selectedType,
-      goodsValue: !goodsValue,
+      goodsValue: !goodsValue || parseInt(goodsValue) > 30000000,
     };
 
     setErrors(newErrors);

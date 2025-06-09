@@ -160,6 +160,7 @@ const TabCancelled = () => {
                 </div>
               </div>
             </div>
+   
 
             {/* Address information */}
             <div className="space-y-6">

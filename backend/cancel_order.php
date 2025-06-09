@@ -11,15 +11,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $conn = require 'database.php';
 $data = json_decode(file_get_contents('php://input'), true);
+$order_id = $data['order_id'] ?? null;
+$reason = $data['reason'] ?? null;
 
-if (!isset($data['order_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Thiếu thông tin đơn hàng']);
-    exit();
+if (!$order_id || !$reason) {
+    echo json_encode(['success' => false, 'message' => 'Thiếu dữ liệu!']);
+    exit;
 }
 
-$order_id = $data['order_id'];
 
-// Kiểm tra trạng thái đơn hàng
 $checkSql = "SELECT status FROM orders WHERE id = ?";
 $checkStmt = $conn->prepare($checkSql);
 $checkStmt->bind_param("i", $order_id);

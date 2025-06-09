@@ -76,7 +76,6 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
     }
   };
 
-  // Hàm lấy địa chỉ từ tọa độ
   const getAddressFromCoordinates = async (lat, lng, isPickup) => {
     try {
       const response = await fetch(
@@ -91,7 +90,6 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
         setDeliveryAddress(address);
       }
 
-      // Truyền địa chỉ ra component cha
       if (onAddressChange) {
         onAddressChange(address, isPickup);
       }
@@ -116,7 +114,6 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
     useMapEvents({
       click: async (e) => {
         const { lat, lng } = e.latlng;
-        // Nếu cả hai điểm đã được đặt, reset trước khi đặt điểm mới
         if (pickupPoint && deliveryPoint) {
           resetMarkers();
           setPickupPoint([lat, lng]);

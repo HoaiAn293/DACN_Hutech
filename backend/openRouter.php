@@ -19,7 +19,7 @@ if (!$prompt) {
     exit;
 }
 
-$api_key = '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'; // Thay thế bằng API key của bạn từ OpenRouter
+$api_key = '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';
 
 $url = "https://openrouter.ai/api/v1/chat/completions";
 

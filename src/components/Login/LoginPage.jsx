@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -131,33 +133,58 @@ function LoginPage() {
         throw new Error('Server không trả về dữ liệu JSON hợp lệ');
       }
 
+
       const data = await response.json();
       if (data.success) {
-        alert('Đăng ký thành công! Vui lòng đăng nhập.');
-        localStorage.removeItem('user');
+        toast.success("Đăng ký thành công! Vui lòng đăng nhập.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          className: "bg-green-50 text-green-700",
+          bodyClassName: "flex items-center gap-2",
+          icon: (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-green-500"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+          ),
+        });
+
+        localStorage.removeItem("user");
         setFormData({
-          username: '',
-          email: '',
-          phone: '',
-          password: '',
-          role: 'user'
+          username: "",
+          email: "",
+          phone: "",
+          password: "",
+          role: "user",
         });
         setIsLogin(true);
       } else {
-        setErrors(prevErrors => ({
+        setErrors((prevErrors) => ({
           ...prevErrors,
-          email: data.message || 'Đã có lỗi xảy ra khi đăng ký'
+          email: data.message || "Đã có lỗi xảy ra khi đăng ký",
         }));
       }
-    } catch (err) {
+    }catch (err) {
       console.error('Registration error:', err);
       setErrors(prevErrors => ({
         ...prevErrors,
         email: `Lỗi: ${err.message || 'Đã có lỗi xảy ra khi đăng ký'}`
       }));
     }
-};
-
+  };
   const toggleForm = () => {
     setIsLogin(!isLogin);
     setFormData({
@@ -176,8 +203,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-cover bg-center flex items-center justify-center bg-gradient-to-br from-blue-500/40 to-white-600/40"
-         style={{ backgroundImage: "url('/img/login.png')" }}>
+  <div className="w-full min-h-screen bg-cover bg-center flex items-center justify-center bg-gradient-to-br from-blue-500/40 to-white-600/40" style={{ backgroundImage: "url('/img/login.png')" }}>
       <div className="w-[400px] backdrop-blur-lg bg-white/10 p-8 rounded-2xl shadow-lg border border-white/20">
         <style jsx>{`
           input:-webkit-autofill,
@@ -289,7 +315,6 @@ function LoginPage() {
         </div>
       </div>
     </div>
-  
   );
 }
 

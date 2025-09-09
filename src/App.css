@@ -62,8 +62,16 @@
   left: 0;
 }
 
-
 .swiper-slide {
     height: 300px;
     background: transparent;
 }
+
+.vehicle-swiper .swiper-button-prev {
+  left: -40px; 
+}
+
+.vehicle-swiper .swiper-button-next {
+  right: -40px;
+}
+

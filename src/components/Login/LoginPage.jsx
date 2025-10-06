@@ -235,7 +235,7 @@ function LoginPage() {
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:ring-2 focus:ring-white-500/50 focus:border-transparent"
+                className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:border-transparent"
                 required
               />
               {errors.username && (
@@ -251,7 +251,7 @@ function LoginPage() {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:ring-2 focus:ring-white-500/50 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:border-transparent"
               required
             />
             {errors.email && (
@@ -272,7 +272,7 @@ function LoginPage() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-r-md focus:outline-none focus:ring-2 focus:ring-white-500/50 focus:border-transparent  placeholder-white/70"
+                  className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-r-md focus:outline-none focus:border-transparent  placeholder-white/70"
                   required
                 />
               </div>
@@ -289,7 +289,7 @@ function LoginPage() {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:ring-2 focus:ring-white-500/50 focus:border-transparent text-black placeholder-white/70"
+              className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:border-transparent text-black placeholder-white/70"
               required
             />
             {errors.password && (

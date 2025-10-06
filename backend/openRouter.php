@@ -19,13 +19,22 @@ if (!$prompt) {
     exit;
 }
 
-$api_key = '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';
+$api_key = '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';
 
 $url = "https://openrouter.ai/api/v1/chat/completions";
 
 $body = json_encode([
     "model" => "openai/gpt-3.5-turbo",
     "messages" => [
+        [
+            "role" => "system",
+            "content" => "Bạn là trợ lý hỗ trợ khách hàng của trang web đặt xe giao hàng SWIFTSHIP. 
+            Nhiệm vụ của bạn:
+            1. Giúp người dùng đặt xe giao hàng (hỏi địa điểm nhận và giao).
+            2. Hướng dẫn sử dụng trang web (cách đăng ký, đăng nhập, hủy đơn).
+            3. Trả lời lịch sự, ngắn gọn, và luôn nhắc lại tính năng chính của dịch vụ.
+            4. Về cách tính chi phí giao hàng lấy số km nhân cho phương tiện giao."
+        ],
         ["role" => "user", "content" => $prompt]
     ]
 ]);

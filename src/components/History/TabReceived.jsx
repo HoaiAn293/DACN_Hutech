@@ -103,6 +103,9 @@ const TabReceived = () => {
                 <div className="font-semibold text-[#1a365d] mb-2">
                   {order.sender_name}
                 </div>
+                 <div className="text-sm text-gray-600 font-medium mb-3">
+                  Số điện thoại
+                </div>
                 <div className="text-gray-600">
                   {order.sender_phone}
                 </div>
@@ -113,6 +116,9 @@ const TabReceived = () => {
                 </div>
                 <div className="font-semibold text-[#1a365d] mb-2">
                   {order.receiver_name}
+                </div>
+                 <div className="text-sm text-gray-600 font-medium mb-3">
+                  Số điện thoại
                 </div>
                 <div className="text-gray-600">
                   {order.receiver_phone}

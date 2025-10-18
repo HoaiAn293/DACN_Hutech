@@ -8,7 +8,7 @@ const TabCompleted = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user) return;
 
-    fetch(`http://localhost/DACS_Hutech/backend/get_orders.php?status=Hoàn tất&user_id=${user.id}`)
+    fetch(`http://localhost/DACN_Hutech/backend/get_orders.php?status=Hoàn tất&user_id=${user.id}`)
       .then((res) => res.json())
       .then((data) => {
         setOrders(data);

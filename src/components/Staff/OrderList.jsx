@@ -50,7 +50,7 @@ const OrderList = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch('http://localhost/DACS_Hutech/backend/get_all_orders.php');
+        const response = await fetch('http://localhost/DACN_Hutech/backend/get_all_orders.php');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const text = await response.text();
         
@@ -79,7 +79,7 @@ const OrderList = () => {
       }
     };
   
-    const fetchDrivers = fetch("http://localhost/DACS_Hutech/backend/get_drivers.php")
+    const fetchDrivers = fetch("http://localhost/DACN_Hutech/backend/get_drivers.php")
       .then(res => res.json())
       .catch(err => {
         console.error("Lỗi khi tải tài xế:", err);
@@ -103,14 +103,14 @@ const OrderList = () => {
   
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const res = await fetch("http://localhost/DACS_Hutech/backend/update_order_status.php", {
+      const res = await fetch("http://localhost/DACN_Hutech/backend/update_order_status.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus })
       });
       const result = await res.json();
       if (result.status === "success") {
-        const response = await fetch('http://localhost/DACS_Hutech/backend/get_all_orders.php');
+        const response = await fetch('http://localhost/DACN_Hutech/backend/get_all_orders.php');
         const data = await response.json();
         setOrders(Array.isArray(data) ? data : []);
         toast.success(`Cập nhật trạng thái đơn #${id} thành công.`);
@@ -135,7 +135,7 @@ const OrderList = () => {
         return;
       }
 
-      const res = await fetch("http://localhost/DACS_Hutech/backend/update_order_status.php", {
+      const res = await fetch("http://localhost/DACN_Hutech/backend/update_order_status.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, driver_id: newDriverId ? parseInt(newDriverId) : null })
@@ -163,7 +163,7 @@ const OrderList = () => {
 
   const handleDeleteOrder = async (id) => {
     try {
-      const res = await fetch("http://localhost/DACS_Hutech/backend/delete_order.php", {
+      const res = await fetch("http://localhost/DACN_Hutech/backend/delete_order.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id })

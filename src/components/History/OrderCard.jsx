@@ -22,7 +22,7 @@ const OrderCard = ({ order, onRefresh }) => {
     const handleCancel = async () => {
         if (window.confirm('Bạn có chắc muốn hủy đơn hàng này?')) {
             try {
-                const response = await fetch('http://localhost/DACS_Hutech/backend/cancel_order.php', {
+                const response = await fetch('http://localhost/DACN_Hutech/backend/cancel_order.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -46,7 +46,7 @@ const OrderCard = ({ order, onRefresh }) => {
 
     const handleUpdate = async (updatedData) => {
         try {
-            const response = await fetch('http://localhost/DACS_Hutech/backend/update_order_status.php', {
+            const response = await fetch('http://localhost/DACN_Hutech/backend/update_order_status.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

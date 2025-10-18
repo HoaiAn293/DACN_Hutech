@@ -29,7 +29,7 @@ const DriverManager = () => {
 
   const fetchDrivers = () => {
     setLoading(true);
-    fetch("http://localhost/DACS_Hutech/backend/get_drivers.php")
+    fetch("http://localhost/DACN_Hutech/backend/get_drivers.php")
       .then((res) => res.json())
       .then((data) => {
         setDrivers(data);
@@ -80,7 +80,7 @@ const DriverManager = () => {
       }
     });
 
-    fetch("http://localhost/DACS_Hutech/backend/add_driver.php", {
+    fetch("http://localhost/DACN_Hutech/backend/add_driver.php", {
       method: "POST",
       body: formData,
     })
@@ -137,7 +137,7 @@ const DriverManager = () => {
     }
 
     let body;
-    let url = "http://localhost/DACS_Hutech/backend/update_driver.php";
+    let url = "http://localhost/DACN_Hutech/backend/update_driver.php";
     let options = {};
 
     if (editForm.image) {
@@ -180,7 +180,7 @@ const DriverManager = () => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa tài xế này?")) return;
     setAdding(true);
     setError("");
-    fetch("http://localhost/DACS_Hutech/backend/delete_driver.php", {
+    fetch("http://localhost/DACN_Hutech/backend/delete_driver.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
@@ -490,7 +490,7 @@ const DriverManager = () => {
                           driver.image_url
                             ? driver.image_url.startsWith("http")
                               ? driver.image_url
-                              : `http://localhost/DACS_Hutech/${driver.image_url.replace(/^\/+/, "")}`
+                              : `http://localhost/DACN_Hutech/${driver.image_url.replace(/^\/+/, "")}`
                             : "https://ui-avatars.com/api/?name=TX&background=eee&color=888"
                         }
                         alt="Ảnh tài xế"

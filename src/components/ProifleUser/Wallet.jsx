@@ -18,7 +18,7 @@ const Wallet = () => {
   useEffect(() => {
     if (!user) return;
 
-    fetch(`http://localhost/DACS_Hutech/backend/get_balance.php?user_id=${user.id}`)
+    fetch(`http://localhost/DACN_Hutech/backend/get_balance.php?user_id=${user.id}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -59,7 +59,7 @@ const Wallet = () => {
     }
 
     try {
-      const response = await fetch('http://localhost/DACS_Hutech/backend/wallet_handler.php', {
+      const response = await fetch('http://localhost/DACN_Hutech/backend/wallet_handler.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -98,7 +98,7 @@ const Wallet = () => {
         setAmount("");
 
         // Cập nhật lại số dư
-        const balanceResponse = await fetch(`http://localhost/DACS_Hutech/backend/get_balance.php?user_id=${user.id}`);
+        const balanceResponse = await fetch(`http://localhost/DACN_Hutech/backend/get_balance.php?user_id=${user.id}`);
         const balanceData = await balanceResponse.json();
         if (balanceData.success) {
           setBalance(balanceData.balance);

@@ -44,7 +44,7 @@ function LoginPage() {
     }
 
     try {
-      const response = await fetch('http://localhost/DACS_Hutech/backend/login_user.php', {
+      const response = await fetch('http://localhost/DACN_Hutech/backend/login_user.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ function LoginPage() {
     }
 
     try {
-      const response = await fetch('http://localhost/DACS_Hutech/backend/register_user.php', {
+      const response = await fetch('http://localhost/DACN_Hutech/backend/register_user.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

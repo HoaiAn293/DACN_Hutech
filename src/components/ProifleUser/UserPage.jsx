@@ -22,7 +22,7 @@ const UserPage = () => {
       navigate('/login');
       return;
     }
-    fetch(`http://localhost/DACS_Hutech/backend/get_user.php?id=${user.id}`)
+    fetch(`http://localhost/DACN_Hutech/backend/get_user.php?id=${user.id}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -75,7 +75,7 @@ const UserPage = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     
     try {
-      const response = await fetch('http://localhost/DACS_Hutech/backend/update_user.php', {
+      const response = await fetch('http://localhost/DACN_Hutech/backend/update_user.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

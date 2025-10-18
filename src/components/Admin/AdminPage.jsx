@@ -32,7 +32,7 @@ const AdminPage = () => {
   const fetchUsers = async () => {
     try {
       const res = await fetch(
-        "http://localhost/DACS_Hutech/backend/get_user.php"
+        "http://localhost/DACN_Hutech/backend/get_user.php"
       );
       const data = await res.json();
       if (data.success) {
@@ -46,7 +46,7 @@ const AdminPage = () => {
   const fetchStats = async () => {
     try {
       const res = await fetch(
-        "http://localhost/DACS_Hutech/backend/admin_stats.php"
+        "http://localhost/DACN_Hutech/backend/admin_stats.php"
       );
       const data = await res.json();
       setStats(data);
@@ -67,7 +67,7 @@ const AdminPage = () => {
     e.preventDefault();
     try {
       const res = await fetch(
-        "http://localhost/DACS_Hutech/backend/create_admin.php",
+        "http://localhost/DACN_Hutech/backend/create_admin.php",
         {
           method: "POST",
           headers: {
@@ -98,7 +98,7 @@ const AdminPage = () => {
     if (!window.confirm("Bạn có chắc muốn xoá?")) return;
     try {
       await fetch(
-        `http://localhost/DACS_Hutech/backend/delete_user.php?id=${id}`,
+        `http://localhost/DACN_Hutech/backend/delete_user.php?id=${id}`,
         { method: "DELETE" }
       );
       fetchUsers();
@@ -113,7 +113,7 @@ const AdminPage = () => {
 
   const handleUpdateUser = async () => {
     try {
-      await fetch("http://localhost/DACS_Hutech/backend/update_user.php", {
+      await fetch("http://localhost/DACN_Hutech/backend/update_user.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editingUser),

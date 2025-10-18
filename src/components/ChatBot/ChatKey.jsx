@@ -34,7 +34,7 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost/DACS_Hutech/backend/openRouter.php', {
+      const response = await fetch('http://localhost/DACN_Hutech/backend/openRouter.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

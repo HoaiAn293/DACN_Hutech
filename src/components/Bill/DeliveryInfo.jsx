@@ -177,7 +177,7 @@ const DeliveryInfo = ({
       try {
         // Kiểm tra số dư tài khoản
         const balanceResponse = await fetch(
-          `http://localhost/DACS_Hutech/backend/get_balance.php?user_id=${userId}`
+          `http://localhost/DACN_Hutech/backend/get_balance.php?user_id=${userId}`
         );
         const balanceData = await balanceResponse.json();
 
@@ -247,7 +247,7 @@ const DeliveryInfo = ({
 
         // Trừ tiền từ ví
         const deductResponse = await fetch(
-          "http://localhost/DACS_Hutech/backend/wallet_handler.php",
+          "http://localhost/DACN_Hutech/backend/wallet_handler.php",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -319,7 +319,7 @@ const DeliveryInfo = ({
 
     try {
       const response = await fetch(
-        "http://localhost/DACS_Hutech/backend/order_handler.php",
+        "http://localhost/DACN_Hutech/backend/order_handler.php",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -338,7 +338,7 @@ const DeliveryInfo = ({
           payment_method: paymentMethod,
         };
         const invoiceRes = await fetch(
-          "http://localhost/DACS_Hutech/backend/invoice_handler.php",
+          "http://localhost/DACN_Hutech/backend/invoice_handler.php",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

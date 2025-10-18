@@ -13,7 +13,7 @@ const TabCancelled = () => {
       return;
     }
 
-    fetch(`http://localhost/DACS_Hutech/backend/get_orders.php?status=Đã huỷ&user_id=${user.id}`, {
+    fetch(`http://localhost/DACN_Hutech/backend/get_orders.php?status=Đã huỷ&user_id=${user.id}`, {
       credentials: "include",
       headers: {
         "Content-Type": "application/json",

@@ -39,7 +39,7 @@ const PerformanceChart = () => {
 
   useEffect(() => {
     // Fetch orders data
-    fetch('http://localhost/DACS_Hutech/backend/get_all_orders.php')
+    fetch('http://localhost/DACN_Hutech/backend/get_all_orders.php')
       .then(res => res.json())
       .then(orders => {
         if (Array.isArray(orders)) {
@@ -76,8 +76,8 @@ const PerformanceChart = () => {
 
     // Fetch users data
     Promise.all([
-      fetch('http://localhost/DACS_Hutech/backend/get_user.php').then(res => res.json()),
-      fetch('http://localhost/DACS_Hutech/backend/get_drivers.php').then(res => res.json())
+      fetch('http://localhost/DACN_Hutech/backend/get_user.php').then(res => res.json()),
+      fetch('http://localhost/DACN_Hutech/backend/get_drivers.php').then(res => res.json())
     ])
       .then(([users, drivers]) => {
         // Lọc user có role là "user"

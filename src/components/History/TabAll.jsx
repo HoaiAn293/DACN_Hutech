@@ -14,7 +14,7 @@ const TabAll = () => {
     }
 
     fetch(
-      `http://localhost/DACS_Hutech/backend/get_orders.php?user_id=${user.id}`,
+      `http://localhost/DACN_Hutech/backend/get_orders.php?user_id=${user.id}`,
       {
         credentials: "include",
         headers: {

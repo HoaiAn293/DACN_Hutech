@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import AdminStats from "./AdminStats";
 import UserTable from "./UserTable";
 import CreateAccountForm from "./CreateAccountForm";
+import Sidebar from "./Sidebar";
+import Topbar from "./Topbar";
 
 const AdminPage = () => {
   const [formData, setFormData] = useState({
@@ -35,11 +37,9 @@ const AdminPage = () => {
         "http://localhost/DACN_Hutech/backend/get_user.php"
       );
       const data = await res.json();
-      if (data.success) {
-        setUsers(data.users);
-      }
+      if (data.success) setUsers(data.users);
     } catch (err) {
-      console.error("Lỗi khi lấy users:", err);
+      console.error(err);
     }
   };
 
@@ -51,16 +51,13 @@ const AdminPage = () => {
       const data = await res.json();
       setStats(data);
     } catch (err) {
-      console.error("Lỗi khi lấy thống kê:", err);
+      console.error(err);
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -70,9 +67,7 @@ const AdminPage = () => {
         "http://localhost/DACN_Hutech/backend/create_admin.php",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
         }
       );
@@ -87,6 +82,7 @@ const AdminPage = () => {
           role: "employee",
         });
         fetchUsers();
+        fetchStats();
       }
     } catch (err) {
       console.error(err);
@@ -102,13 +98,15 @@ const AdminPage = () => {
         { method: "DELETE" }
       );
       fetchUsers();
+      fetchStats();
     } catch (err) {
-      console.error("Lỗi khi xoá:", err);
+      console.error(err);
     }
   };
 
   const handleEdit = (user) => {
     setEditingUser(user);
+    // optional: open side panel or modal later
   };
 
   const handleUpdateUser = async () => {
@@ -121,20 +119,9 @@ const AdminPage = () => {
       setEditingUser(null);
       fetchUsers();
     } catch (err) {
-      console.error("Lỗi khi cập nhật:", err);
+      console.error(err);
     }
   };
-
-  const statsArr = [
-    { title: "Tổng nhân viên", value: stats.total_employees, icon: "👥" },
-    {
-      title: "Doanh thu",
-      value: stats.revenue.toLocaleString() + " ₫",
-      icon: "💰",
-    },
-    { title: "Đơn hàng mới", value: stats.total_orders, icon: "📦" },
-    { title: "Đang chờ xử lý", value: stats.pending_orders, icon: "⏳" },
-  ];
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -142,51 +129,38 @@ const AdminPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="mb-8 flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors duration-200"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Đăng xuất
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-100">
+      <div className="flex">
+        <Sidebar />
+        <main className="flex-1 p-6">
+          <Topbar onLogout={handleLogout} />
+          <AdminStats stats={stats} />
 
-      <AdminStats stats={statsArr} />
+          {/* use 12-col grid so right column can be narrower and sticky */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8">
+              <UserTable
+                users={users}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                handleEdit={handleEdit}
+                handleDelete={handleDelete}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                usersPerPage={usersPerPage}
+              />
+            </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <UserTable
-          users={users}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          handleEdit={handleEdit}
-          handleDelete={handleDelete}
-          currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
-          usersPerPage={usersPerPage}
-          editingUser={editingUser}
-          setEditingUser={setEditingUser}
-          handleUpdateUser={handleUpdateUser}
-        />
-        <CreateAccountForm
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleSubmit={handleSubmit}
-          message={message}
-        />
+            <div className="lg:col-span-4">
+              <CreateAccountForm
+                formData={formData}
+                handleInputChange={handleInputChange}
+                handleSubmit={handleSubmit}
+                message={message}
+              />
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );

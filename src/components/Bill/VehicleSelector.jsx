@@ -115,10 +115,10 @@ const VehicleSelector = ({ onSelect }) => {
 
       {/* Nút điều hướng */}
       <div className="arrow-prev absolute top-1/2 -left-6 cursor-pointer">
-        <i class="fa-solid fa-circle-chevron-left text-[40px] text-blue-900"></i>
+        <i className="fa-solid fa-circle-chevron-left text-[40px] text-blue-900"></i>
       </div>
       <div className="arrow-next absolute top-1/2 -right-6 cursor-pointer">
-        <i class="fa-solid fa-circle-chevron-right text-[40px] text-blue-900"></i>
+        <i className="fa-solid fa-circle-chevron-right text-[40px] text-blue-900"></i>
       </div>
 
       {/* Pagination */}

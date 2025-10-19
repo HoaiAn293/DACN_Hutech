@@ -19,7 +19,7 @@ if (!$prompt) {
     exit;
 }
 
-$api_key = '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';
+$api_key = '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';
 
 $url = "https://openrouter.ai/api/v1/chat/completions";
 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { LayoutDashboard, Users, ShoppingCart, FileText, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Car, ShoppingCart, FileText, Settings, LogOut } from "lucide-react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +9,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "employees", label: "Nhân viên", icon: Users },
+    { id: "car", label: "Loại xe", icon: Car },
     { id: "orders", label: "Đơn hàng", icon: ShoppingCart },
     { id: "invoices", label: "Hoá đơn", icon: FileText },
     { id: "settings", label: "Cài đặt", icon: Settings },

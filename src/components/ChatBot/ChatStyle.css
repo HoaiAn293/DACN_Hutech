@@ -193,3 +193,27 @@
     height: 50px;
   }
 }
+
+.chatbot-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border-top: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.suggestion-button {
+  background: #e0e7ff;
+  color: #1e3a8a;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+
+.suggestion-button:hover {
+  background: #c7d2fe;
+}

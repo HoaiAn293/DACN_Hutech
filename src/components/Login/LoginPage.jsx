@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLogin, useRegister } from "../../hook/useQuery";
+import { useLogin, useRegister } from "../../hook/UseQuery";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

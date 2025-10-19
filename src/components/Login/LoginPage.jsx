@@ -1,94 +1,33 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLogin, useRegister } from "../../hook/useQuery";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    phone: '',
-    password: '',
-    role: 'user'
-  });
-  const [errors, setErrors] = useState({
-    username: '',
-    email: '',
-    phone: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ username: '', email: '', phone: '', password: '', role: 'user' });
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+
+  const loginMutation = useLogin();
+  const registerMutation = useRegister();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value
-    }));
-    setErrors(prevErrors => ({
-      ...prevErrors,
-      [name]: ''
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const validateLogin = () => {
     const newErrors = {};
     if (!formData.email) newErrors.email = 'Vui lòng nhập email';
     if (!formData.password) newErrors.password = 'Vui lòng nhập mật khẩu';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost/DACN_Hutech/backend/login_user.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        if (data.user.role === 'employee') {
-          navigate('/staff');
-        } else if (data.user.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/order');
-        }
-      } else {
-        if (data.message.toLowerCase().includes('mật khẩu')) {
-          setErrors({
-            email: '',
-            password: data.message || 'Mật khẩu không chính xác'
-          });
-        } else {
-          setErrors({
-            email: data.message || 'Email không tồn tại',
-            password: ''
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      setErrors({
-        email: '',
-        password: `Đã có lỗi xảy ra khi đăng nhập: ${err.message}`
-      });
-    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+  const validateRegister = () => {
     const newErrors = {};
     if (!formData.username.trim()) newErrors.username = 'Vui lòng nhập họ tên';
     if (!formData.email.trim()) newErrors.email = 'Vui lòng nhập email';
@@ -96,220 +35,125 @@ function LoginPage() {
     if (!formData.password.trim()) newErrors.password = 'Vui lòng nhập mật khẩu';
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email.trim())) {
-      newErrors.email = 'Email không hợp lệ';
-    }
+    if (formData.email && !emailRegex.test(formData.email.trim())) newErrors.email = 'Email không hợp lệ';
 
     const phoneRegex = /^[0-9]{10}$/;
-    if (formData.phone && !phoneRegex.test(formData.phone.trim())) {
-      newErrors.phone = 'Số điện thoại không hợp lệ (phải có 10 chữ số)';
-    }
+    if (formData.phone && !phoneRegex.test(formData.phone.trim())) newErrors.phone = 'Số điện thoại không hợp lệ (10 chữ số)';
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (!validateLogin()) return;
 
     try {
-      const response = await fetch('http://localhost/DACN_Hutech/backend/register_user.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
-          password: formData.password.trim()
-        })
-      });
+      const data = await loginMutation.mutateAsync({ email: formData.email, password: formData.password });
 
-      if (!response.ok) {
-        throw new Error('Lỗi kết nối đến server');
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Server không trả về dữ liệu JSON hợp lệ');
-      }
-
-
-      const data = await response.json();
       if (data.success) {
-        toast.success("Đăng ký thành công! Vui lòng đăng nhập.", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          className: "bg-green-50 text-green-700",
-          bodyClassName: "flex items-center gap-2",
-          icon: (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-green-500"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ),
-        });
+        localStorage.setItem('user', JSON.stringify(data.user));
+        // toast thành công từ backend
+        toast.success(data.message || 'Đăng nhập thành công!');
 
-        localStorage.removeItem("user");
-        setFormData({
-          username: "",
-          email: "",
-          phone: "",
-          password: "",
-          role: "user",
-        });
-        setIsLogin(true);
+        if (data.user.role === 'employee') navigate('/staff');
+        else if (data.user.role === 'admin') navigate('/admin');
+        else navigate('/order');
       } else {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          email: data.message || "Đã có lỗi xảy ra khi đăng ký",
-        }));
+        const newErrors = {};
+        if (data.message.toLowerCase().includes('email')) newErrors.email = data.message;
+        if (data.message.toLowerCase().includes('mật khẩu') || data.message.toLowerCase().includes('password')) newErrors.password = data.message;
+        setErrors(newErrors);
+
+        // toast lỗi backend
+        toast.error(data.message || 'Đăng nhập thất bại');
       }
-    }catch (err) {
-      console.error('Registration error:', err);
-      setErrors(prevErrors => ({
-        ...prevErrors,
-        email: `Lỗi: ${err.message || 'Đã có lỗi xảy ra khi đăng ký'}`
-      }));
+    } catch (err) {
+      toast.error(`Lỗi khi đăng nhập: ${err.message}`);
     }
   };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!validateRegister()) return;
+
+    try {
+      const data = await registerMutation.mutateAsync({
+        username: formData.username.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        password: formData.password.trim()
+      });
+
+      if (data.success) {
+        toast.success(data.message || 'Đăng ký thành công! Vui lòng đăng nhập.');
+        setFormData({ username:'', email:'', phone:'', password:'', role:'user' });
+        setIsLogin(true);
+      } else {
+        const newErrors = {};
+        if (data.message.toLowerCase().includes('email')) newErrors.email = data.message;
+        if (data.message.toLowerCase().includes('password') || data.message.toLowerCase().includes('mật khẩu')) newErrors.password = data.message;
+        if (data.message.toLowerCase().includes('username')) newErrors.username = data.message;
+        if (data.message.toLowerCase().includes('phone') || data.message.toLowerCase().includes('số điện thoại')) newErrors.phone = data.message;
+        setErrors(newErrors);
+
+        toast.error(data.message || 'Đăng ký thất bại');
+      }
+    } catch (err) {
+      toast.error(`Lỗi khi đăng ký: ${err.message}`);
+    }
+  };
+
   const toggleForm = () => {
     setIsLogin(!isLogin);
-    setFormData({
-      username: '',
-      email: '',
-      phone: '',
-      password: '',
-      role: 'user'
-    });
-    setErrors({
-      username: '',
-      email: '',
-      phone: '',
-      password: ''
-    });
+    setFormData({ username:'', email:'', phone:'', password:'', role:'user' });
+    setErrors({});
   };
 
   return (
-  <div className="w-full min-h-screen bg-cover bg-center flex items-center justify-center bg-gradient-to-br from-blue-500/40 to-white-600/40" style={{ backgroundImage: "url('/img/login.png')" }}>
+    <div className="w-full min-h-screen bg-cover flex items-center justify-center bg-gradient-to-br from-blue-500/40 to-white-600/40" style={{ backgroundImage: "url('/img/login.png')" }}>
       <div className="w-[400px] backdrop-blur-lg bg-white/10 p-8 rounded-2xl shadow-lg border border-white/20">
-        <style jsx>{`
-          input:-webkit-autofill,
-          input:-webkit-autofill:hover,
-          input:-webkit-autofill:focus,
-          input:-webkit-autofill:active {
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: black;
-            transition: background-color 5000s ease-in-out 0s;
-            box-shadow: inset 0 0 20px 20px rgba(255, 255, 255, 0.2);
-          }
-
-        `}</style>
-        
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white">
-            {isLogin ? 'Đăng nhập' : 'Đăng ký'}
-          </h2>
-        </div>
-
+        <h2 className="text-3xl font-bold text-white text-center mb-8">{isLogin ? 'Đăng nhập' : 'Đăng ký'}</h2>
         <form onSubmit={isLogin ? handleLogin : handleRegister}>
-          
           {!isLogin && (
-            
             <div className="mb-4">
               <label className="block text-sm font-medium text-white mb-2">Họ Tên</label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:border-transparent"
-                required
-              />
-              {errors.username && (
-                <p className="text-red-400 text-sm mt-1">{errors.username}</p>
-              )}
+              <input type="text" name="username" value={formData.username} onChange={handleInputChange}
+                     className="w-full px-3 py-2 bg-white/20 rounded-md focus:outline-none" />
+              {errors.username && <p className="text-red-400 text-sm mt-1">{errors.username}</p>}
             </div>
           )}
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-white mb-2">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:border-transparent"
-              required
-            />
-            {errors.email && (
-              <p className="text-red-400 text-sm mt-1">{errors.email}</p>
-            )}
+            <input type="email" name="email" value={formData.email} onChange={handleInputChange}
+                   className="w-full px-3 py-2 bg-white/20 rounded-md focus:outline-none" />
+            {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
           </div>
 
           {!isLogin && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-white mb-2">Số điện thoại</label>
-              <div className="flex">
-                <div className="flex items-center px-4 bg-white/20 backdrop-blur-sm border border-r-0 border-white/30 rounded-l-md">
-                  <img src="/img/vietnam.png" alt="VN flag" className="w-6 h-6" />
-                  <span className="text-black mr-1 self-center">+84</span>
-                </div>
-                <input
-                  type="text"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-r-md focus:outline-none focus:border-transparent  placeholder-white/70"
-                  required
-                />
-              </div>
-              {errors.phone && (
-                <p className="text-red-400 text-sm mt-1">{errors.phone}</p>
-              )}
+              <input type="text" name="phone" value={formData.phone} onChange={handleInputChange}
+                     className="w-full px-3 py-2 bg-white/20 rounded-md focus:outline-none" />
+              {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
             </div>
           )}
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-white mb-2">Mật khẩu</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:border-transparent text-black placeholder-white/70"
-              required
-            />
-            {errors.password && (
-              <p className="text-red-400 text-sm mt-1">{errors.password}</p>
-            )}
+            <input type="password" name="password" value={formData.password} onChange={handleInputChange}
+                   className="w-full px-3 py-2 bg-white/20 rounded-md focus:outline-none" />
+            {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-yellow-400 text-white py-2 px-4 rounded-md hover:bg-yellow-500 transition duration-300"
-          >
+          <button type="submit" className="w-full bg-yellow-400 text-white py-2 px-4 rounded-md hover:bg-yellow-500 transition duration-300">
             {isLogin ? 'Đăng nhập' : 'Đăng ký'}
           </button>
         </form>
 
         <div className="mt-4 text-center">
-          <button
-            onClick={toggleForm}
-            className="text-white hover:text-yellow-300 transition duration-300"
-          >
+          <button onClick={toggleForm} className="text-white hover:text-yellow-300 transition duration-300">
             {isLogin ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Đăng nhập'}
           </button>
         </div>

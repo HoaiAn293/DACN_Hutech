@@ -34,6 +34,7 @@ try {
         exit;
     }
 
+    // CẬP NHẬT: JOIN với bảng 'users' (d) thay vì 'drivers' để lấy tên tài xế
     $sql = "SELECT 
                 o.*, 
                 i.invoice_number, 
@@ -44,7 +45,7 @@ try {
                 d.full_name AS drivers_name
             FROM orders o
             LEFT JOIN invoices i ON o.id = i.order_id
-            LEFT JOIN drivers d ON d.id = o.driver_id
+            LEFT JOIN users d ON d.id = o.driver_id  -- Đã sửa: JOIN users thay vì drivers
             WHERE o.user_id = ?";
     $params = [$user_id];
     $types = "i";

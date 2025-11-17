@@ -58,13 +58,19 @@ function LoginPage() {
       const data = await response.json();
       if (data.success) {
         localStorage.setItem('user', JSON.stringify(data.user));
-        if (data.user.role === 'employee') {
-          navigate('/staff');
-        } else if (data.user.role === 'admin') {
+        
+        // --- LOGIC ĐIỀU HƯỚNG MỚI THEO ROLE ---
+        if (data.user.role === 'admin') {
           navigate('/admin');
+        } else if (data.user.role === 'employee') {
+          navigate('/staff');
+        } else if (data.user.role === 'driver') { // THÊM ĐIỀU KIỆN DRIVER
+          navigate('/driver');
         } else {
           navigate('/order');
         }
+        // --- END LOGIC ĐIỀU HƯỚNG MỚI ---
+        
       } else {
         if (data.message.toLowerCase().includes('mật khẩu')) {
           setErrors({

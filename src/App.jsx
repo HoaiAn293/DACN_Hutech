@@ -7,6 +7,7 @@ import UserPage from './components/ProifleUser/UserPage';
 import StaffPage from './components/Staff/StaffPage';
 import LoginPage from './components/Login/LoginPage';
 import AdminPage from './components/Admin/AdminPage';
+import DriverPage from './components/Driver/DriverPage'; // THÊM IMPORT
 import ChatBot from './components/ChatBot/ChatKey';
 import { Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
@@ -25,7 +26,7 @@ const UnauthorizedMessage = () => (
 const ProtectedStaffRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('user'));
   if (!user) {
-    return <Navigate to="/" />;
+    return <Navigate to="/login" />;
   }
   if (user.role !== 'employee' && user.role !== 'admin') {
     return <UnauthorizedMessage />;
@@ -36,13 +37,25 @@ const ProtectedStaffRoute = ({ children }) => {
 const ProtectedAdminRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('user'));
   if (!user) {
-    return <Navigate to="/" />;
+    return <Navigate to="/login" />;
   }
   if (user.role !== 'admin') {
     return <UnauthorizedMessage />;
   }
   return children;
 };
+
+// THÊM LOGIC BẢO VỆ CHO DRIVER
+const ProtectedDriverRoute = ({ children }) => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+      return <Navigate to="/login" />;
+    }
+    if (user.role !== 'driver') {
+      return <UnauthorizedMessage />;
+    }
+    return children;
+  };
 
 function App() {
   return (
@@ -78,6 +91,15 @@ function App() {
                 <ProtectedAdminRoute>
                   <AdminPage />
                 </ProtectedAdminRoute>
+              } 
+            />
+            {/* THÊM ROUTE CHO DRIVER */}
+            <Route 
+              path="/driver" 
+              element={
+                <ProtectedDriverRoute>
+                  <DriverPage />
+                </ProtectedDriverRoute>
               } 
             />
           </Routes>

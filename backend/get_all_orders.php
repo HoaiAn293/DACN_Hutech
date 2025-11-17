@@ -4,6 +4,8 @@ header("Content-Type: application/json");
 
 $conn = require 'database.php';
 
+// CẬP NHẬT: JOIN với bảng 'users' (d) thay vì 'drivers' (d)
+// Thêm điều kiện d.role = 'driver' để đảm bảo chỉ join đúng tài xế
 $sql = "SELECT 
     o.*, 
     i.invoice_number,
@@ -13,7 +15,7 @@ $sql = "SELECT
     d.full_name AS driver_name
 FROM orders o
 LEFT JOIN invoices i ON o.id = i.order_id
-LEFT JOIN drivers d ON d.id = o.driver_id
+LEFT JOIN users d ON d.id = o.driver_id AND d.role = 'driver'
 ORDER BY o.created_at DESC";
 
 $result = $conn->query($sql);

@@ -25,10 +25,10 @@ const Sidebar = ({ onSelect, selectedTab }) => {
         });
     };
   
+    // ĐÃ CẬP NHẬT: Loại bỏ "Tài xế" khỏi menu của Nhân viên
     const menuItems = [
       { icon: "📄", label: "Đơn hàng", key: "orders" },
       { icon: "📊", label: "Thống kê", key: "dashboard" },
-      { icon: "👤", label: "Tài xế", key: "drivers" },
     ];
   
     return (
@@ -77,4 +77,3 @@ const Sidebar = ({ onSelect, selectedTab }) => {
   );
   
   export default Sidebar;
-  

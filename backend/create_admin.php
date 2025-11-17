@@ -24,15 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = $data['email'] ?? '';
     $phone_number = $data['phone_number'] ?? '';
     $password = isset($data['password']) ? password_hash($data['password'], PASSWORD_DEFAULT) : '';
-    $role = $data['role'] ?? 'admin'; // Lấy role từ form, mặc định là admin nếu không có
+    $role = $data['role'] ?? 'employee'; // Lấy role từ form, mặc định là employee
 
     if (empty($full_name) || empty($email) || empty($phone_number) || empty($password)) {
         echo json_encode(["success" => false, "message" => "Vui lòng điền đầy đủ thông tin!"]);
         exit();
     }
 
-    // Kiểm tra role hợp lệ
-    if (!in_array($role, ['admin', 'employee'])) {
+    // CẬP NHẬT: Chấp nhận 'driver' là role hợp lệ
+    if (!in_array($role, ['admin', 'employee', 'driver'])) {
         echo json_encode(["success" => false, "message" => "Vai trò không hợp lệ!"]);
         exit();
     }
@@ -52,7 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bind_param("sssss", $full_name, $email, $phone_number, $password, $role);
 
         if ($stmt->execute()) {
-            $successMessage = $role === 'admin' ? "Tạo tài khoản admin thành công!" : "Tạo tài khoản nhân viên thành công!";
+            // CẬP NHẬT: Tin nhắn thành công động
+            $successMessage = "Tạo tài khoản thành công!";
+            if ($role === 'admin') $successMessage = "Tạo tài khoản Admin thành công!";
+            if ($role === 'employee') $successMessage = "Tạo tài khoản Nhân viên thành công!";
+            if ($role === 'driver') $successMessage = "Tạo tài khoản Tài xế thành công!";
+
             echo json_encode(["success" => true, "message" => $successMessage]);
         } else {
             echo json_encode(["success" => false, "message" => "Đã có lỗi xảy ra khi lưu vào cơ sở dữ liệu."]);

@@ -13,8 +13,10 @@ const UserTable = ({
   setEditingUser,
   handleUpdateUser,
 }) => {
-  const employees = users.filter((u) => u.role === "employee");
-  const filteredUsers = employees.filter((u) =>
+  // CẬP NHẬT: Hiển thị cả employee và driver
+  const manageableUsers = users.filter((u) => u.role === "employee" || u.role === "driver");
+  
+  const filteredUsers = manageableUsers.filter((u) =>
     u.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const indexOfLast = currentPage * usersPerPage;
@@ -32,7 +34,7 @@ const UserTable = ({
 
   return (
     <div className="bg-white p-6 rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Danh sách nhân viên</h2>
+      <h2 className="text-xl font-bold mb-4">Danh sách Nhân viên & Tài xế</h2>
       <input
         type="text"
         placeholder="Tìm kiếm theo tên..."
@@ -46,6 +48,7 @@ const UserTable = ({
             <th className="py-2">Tên</th>
             <th>Email</th>
             <th>SDT</th>
+            <th>Vai trò</th>
             <th>Hành động</th>
           </tr>
         </thead>
@@ -59,7 +62,7 @@ const UserTable = ({
                     name="full_name"
                     value={editingUser.full_name}
                     onChange={handleChange}
-                    className="border rounded px-2 py-1"
+                    className="border rounded px-2 py-1 w-full"
                   />
                 </td>
                 <td>
@@ -68,7 +71,7 @@ const UserTable = ({
                     name="email"
                     value={editingUser.email}
                     onChange={handleChange}
-                    className="border rounded px-2 py-1"
+                    className="border rounded px-2 py-1 w-full"
                   />
                 </td>
                 <td>
@@ -77,8 +80,20 @@ const UserTable = ({
                     name="phone_number"
                     value={editingUser.phone_number}
                     onChange={handleChange}
-                    className="border rounded px-2 py-1"
+                    className="border rounded px-2 py-1 w-full"
                   />
+                </td>
+                <td>
+                   {/* CẬP NHẬT: Select role khi chỉnh sửa */}
+                   <select
+                    name="role"
+                    value={editingUser.role}
+                    onChange={handleChange}
+                    className="border rounded px-2 py-1 w-full"
+                  >
+                    <option value="employee">Nhân viên</option>
+                    <option value="driver">Tài xế</option>
+                  </select>
                 </td>
                 <td className="space-x-2">
                   <button
@@ -100,6 +115,14 @@ const UserTable = ({
                 <td>{user.full_name}</td>
                 <td>{user.email}</td>
                 <td>{user.phone_number}</td>
+                {/* CẬP NHẬT: Hiển thị role */}
+                <td>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    user.role === 'employee' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                  }`}>
+                    {user.role === 'employee' ? 'Nhân viên' : 'Tài xế'}
+                  </span>
+                </td>
                 <td className="space-x-2">
                   <button
                     onClick={() => handleEdit(user)}

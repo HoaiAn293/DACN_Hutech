@@ -4,12 +4,19 @@ require_once 'database.php';
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-$sql = "SELECT id, full_name, phone_number, cccd, license_number, vehicle_type, created_at, note, status, image_url FROM drivers";
+// CẬP NHẬT: Lấy tài xế từ bảng 'users' (thay vì 'drivers')
+// Chỉ lấy những tài xế đang 'active'
+$sql = "SELECT id, full_name 
+        FROM users 
+        WHERE role = 'driver' AND status = 'active'";
+
 $result = $conn->query($sql);
 
 $drivers = [];
-while ($row = $result->fetch_assoc()) {
-    $drivers[] = $row;
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $drivers[] = $row;
+    }
 }
 
 echo json_encode($drivers);

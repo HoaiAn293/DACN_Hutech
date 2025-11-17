@@ -123,35 +123,62 @@ const OrderList = () => {
     }
   };
 
+  // LOGIC PHÂN CÔNG TÀI XẾ (ĐÃ CHỈNH SỬA)
   const handleDriverChange = async (id, newDriverId) => {
+    const isAssigning = newDriverId !== "" && newDriverId !== null;
+    
     try {
-      const hasActiveOrder = orders.some(order => 
-        order.driver_id === parseInt(newDriverId) && 
-        (order.status === "Đang giao" || order.status === "Chờ xác nhận")
-      );
+      // 1. Kiểm tra tài xế có đơn đang hoạt động không (chỉ check nếu gán tài xế mới)
+      if (isAssigning) {
+        const hasActiveOrder = orders.some(order => 
+          order.driver_id === parseInt(newDriverId) && 
+          (order.status === "Đang giao" || order.status === "Đã nhận")
+        );
 
-      if (hasActiveOrder) {
-        toast.error("Tài xế này đang có đơn hàng chưa hoàn thành. Vui lòng chọn tài xế khác.");
-        return;
+        if (hasActiveOrder) {
+          toast.error("Tài xế này đang có đơn hàng chưa hoàn thành. Vui lòng chọn tài xế khác.");
+          return;
+        }
       }
 
+      // 2. Chuẩn bị dữ liệu cập nhật
+      let updatePayload = { 
+        id, 
+        driver_id: newDriverId ? parseInt(newDriverId) : null
+      };
+
+      // 3. Nếu gán tài xế thành công, ĐỒNG THỜI chuyển trạng thái sang "Đang giao" (Shipping)
+      let newStatus = null;
+      if (isAssigning) {
+          // Chỉ chuyển trạng thái nếu đơn hàng đang ở "Chờ xác nhận"
+          const currentOrder = orders.find(o => o.id === id);
+          if (currentOrder && currentOrder.status === 'Chờ xác nhận') {
+              newStatus = 'Đang giao';
+              updatePayload.status = newStatus;
+          }
+      }
+      
+      // 4. Gọi API cập nhật
       const res = await fetch("http://localhost/DACN_Hutech/backend/update_order_status.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, driver_id: newDriverId ? parseInt(newDriverId) : null })
+        body: JSON.stringify(updatePayload)
       });
+      
       const result = await res.json();
       if (result.status === "success") {
+        const driverName = drivers.find(d => d.id === parseInt(newDriverId))?.full_name || null;
         setOrders(prev =>
           prev.map(order =>
             order.id === id ? { 
               ...order, 
               driver_id: newDriverId ? parseInt(newDriverId) : null, 
-              driver_name: drivers.find(d => d.id === parseInt(newDriverId))?.full_name || null 
+              driver_name: driverName,
+              status: newStatus || order.status // Cập nhật trạng thái nếu có
             } : order
           )
         );
-        toast.success(`Cập nhật tài xế cho đơn #${id} thành công.`);
+        toast.success(newStatus ? `Đã phân công tài xế và chuyển trạng thái sang "${newStatus}".` : `Cập nhật tài xế cho đơn #${id} thành công.`);
       } else {
         toast.error("Cập nhật thất bại: " + (result.message || "Lỗi không xác định"));
       }

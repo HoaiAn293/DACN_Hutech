@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import AdminStats from "./AdminStats";
 import UserTable from "./UserTable";
 import CreateAccountForm from "./CreateAccountForm";
+import TransactionApproval from "./TransactionApproval"; // Đã thêm: Import component mới
 
 const AdminPage = () => {
   const [formData, setFormData] = useState({
@@ -167,7 +168,7 @@ const AdminPage = () => {
 
       <AdminStats stats={statsArr} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"> {/* Đã thêm mb-8 */}
         <UserTable
           users={users}
           searchTerm={searchTerm}
@@ -188,6 +189,9 @@ const AdminPage = () => {
           message={message}
         />
       </div>
+
+      {/* THÊM PHẦN DUYỆT GIAO DỊCH */}
+      <TransactionApproval />
     </div>
   );
 };

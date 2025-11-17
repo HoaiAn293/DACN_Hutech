@@ -28,6 +28,36 @@ const Wallet = () => {
       .catch(err => console.error('Lỗi khi lấy số dư:', err));
   }, [user]); 
 
+  // --- HÀM NÀY PHẢI ĐƯỢC ĐỊNH NGHĨA NGOÀI HÀM handleTransaction ---
+  const showPendingToast = (action) => {
+    toast.info(`Yêu cầu ${action === 'deposit' ? 'nạp tiền' : 'rút tiền'} đang chờ Admin duyệt.`, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      className: "bg-orange-50 text-orange-700",
+      bodyClassName: "flex items-center gap-2",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 text-orange-500"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+            clipRule="evenodd"
+          />
+        </svg>
+      ),
+    });
+  };
+  // -----------------------------------------------------------------
+
   const handleTransaction = async (action) => {
     if (!amount || isNaN(amount) || parseInt(amount) <= 0) {
       toast.error('Vui lòng nhập số tiền hợp lệ!', {
@@ -69,41 +99,14 @@ const Wallet = () => {
         })
       });
       const data = await response.json();
+      
       if (data.success) {
-        toast.success(`${action === 'deposit' ? 'Nạp' : 'Rút'} tiền thành công!`, {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          className: "bg-green-50 text-green-700",
-          bodyClassName: "flex items-center gap-2",
-          icon: (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-green-500"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ),
-        });
+        // Gọi hàm đã được định nghĩa ở trên (Đã sửa lỗi)
+        showPendingToast(action);
         setAmount("");
 
-        // Cập nhật lại số dư
-        const balanceResponse = await fetch(`http://localhost/DACN_Hutech/backend/get_balance.php?user_id=${user.id}`);
-        const balanceData = await balanceResponse.json();
-        if (balanceData.success) {
-          setBalance(balanceData.balance);
-        }
       } else {
+        // Vẫn hiển thị lỗi nếu số dư không đủ (từ PHP) hoặc lỗi khác
         toast.error(data.message || 'Có lỗi xảy ra', {
           position: "top-right",
           autoClose: 3000,
@@ -202,7 +205,7 @@ const Wallet = () => {
           <button
             onClick={() => {
               toast.dismiss();
-              handleTransaction('deposit');
+              handleTransaction('deposit'); // Gọi hàm xử lý giao dịch
             }}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >

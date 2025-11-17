@@ -14,4 +14,3 @@ while ($row = $result->fetch_assoc()) {
 
 echo json_encode($drivers);
 $conn->close();
-?>

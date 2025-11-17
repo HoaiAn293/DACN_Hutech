@@ -13,6 +13,7 @@ const DeliveryInfo = ({
   const [_invoiceInfo, setInvoiceInfo] = useState(null);
 
   const [userId, setUserId] = useState(null);
+  const [currentBalance, setCurrentBalance] = useState(0);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -21,16 +22,24 @@ const DeliveryInfo = ({
     }
   }, []);
 
-  const [pickupAddressState, setPickupAddressState] = useState(
-    pickupAddress || ""
-  );
+  // HIỆU ỨNG: GỌI API LẤY SỐ DƯ KHI userId THAY ĐỔI
+  useEffect(() => {
+    if (!userId) return;
+
+    fetch(`http://localhost/DACN_Hutech/backend/get_balance.php?user_id=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                setCurrentBalance(data.balance);
+            }
+        })
+        .catch(err => console.error('Lỗi khi lấy số dư:', err));
+  }, [userId]); 
+  
   const [pickupDetail, setPickupDetail] = useState("");
   const [senderName, setSenderName] = useState("");
   const [senderPhone, setSenderPhone] = useState("");
 
-  const [deliveryAddressState, setDeliveryAddressState] = useState(
-    deliveryAddress || ""
-  );
   const [deliveryDetail, setDeliveryDetail] = useState("");
   const [receiverName, setReceiverName] = useState("");
   const [receiverPhone, setReceiverPhone] = useState("");
@@ -38,18 +47,6 @@ const DeliveryInfo = ({
   const [valueError, setValueError] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
-
-  useEffect(() => {
-    if (pickupAddress) {
-      setPickupAddressState(pickupAddress);
-    }
-  }, [pickupAddress]);
-
-  useEffect(() => {
-    if (deliveryAddress) {
-      setDeliveryAddressState(deliveryAddress);
-    }
-  }, [deliveryAddress]);
 
   const [errors, setErrors] = useState({
     pickupAddress: false,
@@ -63,18 +60,18 @@ const DeliveryInfo = ({
   });
 
   const isValidPhone = (phone) => {
-    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})\b/;
+    const phoneRegex = /^0\d{9}$/; 
     return phoneRegex.test(phone);
   };
 
   const validateForm = () => {
     const newErrors = {
-      pickupAddress: !pickupAddressState.trim(),
+      pickupAddress: !pickupAddress.trim(),
       senderName: !senderName.trim(),
-      senderPhone: !senderPhone.trim() || !isValidPhone(senderPhone),
-      deliveryAddress: !deliveryAddressState.trim(),
+      senderPhone: !senderName.trim() || !isValidPhone(senderPhone),
+      deliveryAddress: !deliveryAddress.trim(),
       receiverName: !receiverName.trim(),
-      receiverPhone: !receiverPhone.trim() || !isValidPhone(receiverPhone),
+      receiverPhone: !receiverName.trim() || !isValidPhone(receiverPhone),
       selectedType: !selectedType,
       goodsValue: !goodsValue || parseInt(goodsValue) > 30000000,
     };
@@ -84,6 +81,8 @@ const DeliveryInfo = ({
   };
 
   const handleSubmit = async () => {
+    const isBalanceInsufficient = paymentMethod === 'balance' && shippingFee > currentBalance;
+    
     if (!selectedVehicle) {
       toast.error("Vui lòng chọn loại xe trước khi xác nhận!", {
         position: "top-right",
@@ -112,6 +111,7 @@ const DeliveryInfo = ({
       });
       return;
     }
+    
     if (!validateForm()) {
       toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!", {
         position: "top-right",
@@ -140,6 +140,20 @@ const DeliveryInfo = ({
       });
       return;
     }
+    
+    // KIỂM TRA SỐ DƯ NẾU THANH TOÁN BẰNG VÍ
+    if (isBalanceInsufficient) {
+      toast.error(
+        "Số dư ví không đủ để thanh toán phí vận chuyển. Vui lòng chọn COD hoặc nạp thêm tiền.",
+        {
+          position: "top-right",
+          autoClose: 5000,
+          className: "bg-red-50 text-red-700",
+        }
+      );
+      return;
+    }
+
     setShowConfirmModal(true);
   };
 
@@ -175,97 +189,36 @@ const DeliveryInfo = ({
 
     if (paymentMethod === "balance") {
       try {
-        // Kiểm tra số dư tài khoản
-        const balanceResponse = await fetch(
-          `http://localhost/DACN_Hutech/backend/get_balance.php?user_id=${userId}`
-        );
-        const balanceData = await balanceResponse.json();
-
-        if (!balanceData.success) {
-          toast.error(
-            "Không thể kiểm tra số dư tài khoản. Vui lòng thử lại sau.",
-            {
-              position: "top-right",
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              className: "bg-red-50 text-red-700",
-              bodyClassName: "flex items-center gap-2",
-              icon: (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-red-500"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ),
-            }
-          );
-          return;
-        }
-
-        if (balanceData.balance < shippingFee) {
-          toast.error(
-            "Số dư tài khoản không đủ để thanh toán. Vui lòng nạp thêm tiền hoặc chọn phương thức thanh toán khác.",
-            {
-              position: "top-right",
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              className: "bg-red-50 text-red-700",
-              bodyClassName: "flex items-center gap-2",
-              icon: (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-red-500"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ),
-            }
-          );
-          return;
-        }
-
-        // Trừ tiền từ ví
+        // GỌI API TRỪ TIỀN TRỰC TIẾP (INSTANT WITHDRAW)
         const deductResponse = await fetch(
-          "http://localhost/DACN_Hutech/backend/wallet_handler.php",
+          "http://localhost/DACN_Hutech/backend/instant_withdraw.php", 
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               user_id: userId,
               amount: shippingFee,
-              action: "withdraw",
             }),
           }
         );
 
         const deductResult = await deductResponse.json();
         if (!deductResult.success) {
-          alert("Có lỗi xảy ra khi thanh toán. Vui lòng thử lại sau.");
+          // Nếu trừ tiền thất bại (chủ yếu do lỗi DB hoặc lỗi API)
+          toast.error(deductResult.message || "Thanh toán ví thất bại. Vui lòng thử lại sau.");
+          setShowConfirmModal(false);
           return;
         }
+        
+        // Cập nhật số dư sau khi thanh toán thành công
+        const balanceResponse = await fetch(`http://localhost/DACN_Hutech/backend/get_balance.php?user_id=${userId}`);
+        const balanceData = await balanceResponse.json();
+        if (balanceData.success) {
+            setCurrentBalance(balanceData.balance);
+        }
+
       } catch {
-        toast.error("Không thể xử lý thanh toán. Vui lòng thử lại sau.", {
+        toast.error("Không thể kết nối API thanh toán ví. Vui lòng thử lại sau.", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -299,13 +252,13 @@ const DeliveryInfo = ({
       user_id: userId,
       vehicle: selectedVehicle,
       pickup: {
-        address: pickupAddressState,
+        address: pickupAddress, 
         addressDetail: pickupDetail,
         senderName,
         senderPhone,
       },
       delivery: {
-        address: deliveryAddressState,
+        address: deliveryAddress, 
         addressDetail: deliveryDetail,
         receiverName,
         receiverPhone,
@@ -314,7 +267,7 @@ const DeliveryInfo = ({
       },
       paymentMethod: paymentMethod,
       shippingFee: shippingFee,
-      isPaid: paymentMethod === "balance",
+      isPaid: paymentMethod === "balance", // TRUE nếu đã trừ tiền thành công
     };
 
     try {
@@ -330,7 +283,7 @@ const DeliveryInfo = ({
       const result = await response.json();
       setShowConfirmModal(false);
       if (result.success && result.order_id) {
-        // Gọi API tạo hóa đơn và lưu dữ liệu hóa đơn vào state
+        // Tạo hóa đơn
         const invoicePayload = {
           order_id: result.order_id,
           user_id: userId,
@@ -346,12 +299,12 @@ const DeliveryInfo = ({
           }
         );
         const invoiceData = await invoiceRes.json();
-        setInvoiceInfo(invoiceData); // Lưu dữ liệu bản hóa đơn vào state
+        setInvoiceInfo(invoiceData); 
 
         toast.success(
           paymentMethod === "cod"
             ? "Đặt đơn thành công! Vui lòng thanh toán khi nhận hàng."
-            : "Đặt đơn và thanh toán thành công!",
+            : "Đặt đơn và thanh toán thành công!", // THÔNG BÁO THÀNH CÔNG (TỰ ĐỘNG TRỪ)
           {
             position: "top-right",
             autoClose: 3000,
@@ -379,7 +332,7 @@ const DeliveryInfo = ({
           }
         );
       } else {
-        toast.success(result.message || "Có lỗi xảy ra khi đặt đơn.", {
+        toast.error(result.message || "Có lỗi xảy ra khi đặt đơn.", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -392,13 +345,13 @@ const DeliveryInfo = ({
           icon: (
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-green-500"
+              className="h-5 w-5 text-red-500"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
               <path
                 fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                 clipRule="evenodd"
               />
             </svg>
@@ -406,7 +359,6 @@ const DeliveryInfo = ({
         });
       }
     } catch {
-      // Remove the unused 'error' parameter
       toast.error("Không thể gửi đơn hàng.", {
         position: "top-right",
         autoClose: 3000,
@@ -474,6 +426,9 @@ const DeliveryInfo = ({
 
     calculateShippingFee();
   }, [selectedVehicle, distance]);
+  
+  const isBalanceInsufficient = shippingFee > currentBalance; // LOGIC CHECK SỐ DƯ
+  
   return (
     <div className="w-full mt-10 pr-6">
       <h2 className="font-medium text-[20px] mb-6 text-[#4e7cb2]">
@@ -512,18 +467,15 @@ const DeliveryInfo = ({
             <input
               type="text"
               placeholder="Địa chỉ"
-              value={pickupAddressState}
-              onChange={(e) => {
-                setPickupAddressState(e.target.value);
-                setErrors((prev) => ({ ...prev, pickupAddress: false }));
-              }}
-              className={`rounded-lg p-3 w-full bg-gray-50 border ${
+              value={pickupAddress}
+              readOnly
+              className={`rounded-lg p-3 w-full bg-gray-100 border ${
                 errors.pickupAddress ? "border-red-500" : "border-gray-300"
               } focus:border-[#4e7cb2] focus:ring-1 focus:ring-[#4e7cb2] outline-none transition-all`}
               required
             />
             {errors.pickupAddress && (
-              <p className="text-red-500 text-sm mt-1">Vui lòng nhập địa chỉ</p>
+              <p className="text-red-500 text-sm mt-1">Vui lòng chọn địa chỉ trên bản đồ</p>
             )}
           </div>
           <div className="relative">
@@ -555,20 +507,26 @@ const DeliveryInfo = ({
               </p>
             )}
           </div>
+          {/* SENDER PHONE INPUT: ĐÃ TỐI ƯU */}
           <div>
-            <input
-              type="text"
-              placeholder="Số điện thoại"
-              value={senderPhone}
-              onChange={(e) => {
-                setSenderPhone(e.target.value);
-                setErrors((prev) => ({ ...prev, senderPhone: false }));
-              }}
-              className={`rounded-lg p-3 w-full bg-gray-50 border ${
+            <div className={`flex rounded-lg overflow-hidden border ${
                 errors.senderPhone ? "border-red-500" : "border-gray-300"
-              } focus:border-[#4e7cb2] focus:ring-1 focus:ring-[#4e7cb2] outline-none transition-all`}
-              required
-            />
+              } focus-within:ring-2 focus-within:ring-[#4e7cb2] focus-within:border-[#4e7cb2] transition-all`}>
+              <div className="flex items-center px-3 bg-gray-200 text-gray-700 font-medium border-r border-gray-300">
+                +84
+              </div>
+              <input
+                type="text"
+                placeholder="Số điện thoại"
+                value={senderPhone}
+                onChange={(e) => {
+                  setSenderPhone(e.target.value);
+                  setErrors((prev) => ({ ...prev, senderPhone: false }));
+                }}
+                className="flex-1 p-3 bg-gray-50 focus:outline-none"
+                required
+              />
+            </div>
             {errors.senderPhone && (
               <p className="text-red-500 text-sm mt-1">
                 {!senderPhone.trim()
@@ -577,6 +535,7 @@ const DeliveryInfo = ({
               </p>
             )}
           </div>
+          {/* END SENDER PHONE INPUT */}
         </div>
       </div>
 
@@ -612,18 +571,15 @@ const DeliveryInfo = ({
             <input
               type="text"
               placeholder="Địa chỉ"
-              value={deliveryAddressState}
-              onChange={(e) => {
-                setDeliveryAddressState(e.target.value);
-                setErrors((prev) => ({ ...prev, deliveryAddress: false }));
-              }}
-              className={`rounded-lg p-3 w-full bg-gray-50 border ${
+              value={deliveryAddress}
+              readOnly
+              className={`rounded-lg p-3 w-full bg-gray-100 border ${
                 errors.deliveryAddress ? "border-red-500" : "border-gray-300"
               } focus:border-[#4e7cb2] focus:ring-1 focus:ring-[#4e7cb2] outline-none transition-all`}
               required
             />
             {errors.deliveryAddress && (
-              <p className="text-red-500 text-sm mt-1">Vui lòng nhập địa chỉ</p>
+              <p className="text-red-500 text-sm mt-1">Vui lòng chọn địa chỉ trên bản đồ</p>
             )}
           </div>
           <div className="relative">
@@ -652,17 +608,25 @@ const DeliveryInfo = ({
               </p>
             )}
           </div>
+          {/* RECEIVER PHONE INPUT: ĐÃ TỐI ƯU */}
           <div>
-            <input
-              type="text"
-              placeholder="Số điện thoại"
-              value={receiverPhone}
-              onChange={(e) => {
-                setReceiverPhone(e.target.value);
-                setErrors((prev) => ({ ...prev, receiverPhone: false }));
-              }}
-              className="rounded-lg p-3 w-full bg-gray-50 border border-gray-300 focus:border-[#4e7cb2] focus:ring-1 focus:ring-[#4e7cb2] outline-none transition-all"
-            />
+            <div className={`flex rounded-lg overflow-hidden border ${
+                errors.receiverPhone ? "border-red-500" : "border-gray-300"
+              } focus-within:ring-2 focus-within:ring-[#4e7cb2] focus-within:border-[#4e7cb2] transition-all`}>
+              <div className="flex items-center px-3 bg-gray-200 text-gray-700 font-medium border-r border-gray-300">
+                +84
+              </div>
+              <input
+                type="text"
+                placeholder="Số điện thoại"
+                value={receiverPhone}
+                onChange={(e) => {
+                  setReceiverPhone(e.target.value);
+                  setErrors((prev) => ({ ...prev, receiverPhone: false }));
+                }}
+                className="flex-1 p-3 bg-gray-50 focus:outline-none"
+              />
+            </div>
             {errors.receiverPhone && (
               <p className="text-red-500 text-sm mt-1">
                 {!receiverPhone.trim()
@@ -671,6 +635,7 @@ const DeliveryInfo = ({
               </p>
             )}
           </div>
+          {/* END RECEIVER PHONE INPUT */}
           <ProductType value={selectedType} onChange={setSelectedType} />
 
           <div className="relative">
@@ -705,6 +670,7 @@ const DeliveryInfo = ({
                 <span>Tối đa 30.000.000 VNĐ</span>
               </div>
             )}
+            <p className="text-gray-500 text-xs mt-1">Giá trị hàng hóa tối đa được bảo hiểm là 30.000.000 VNĐ</p>
           </div>
         </div>
       </div>
@@ -743,16 +709,29 @@ const DeliveryInfo = ({
               Thanh toán khi nhận hàng (COD)
             </span>
           </label>
-          <label className="flex items-center space-x-3 cursor-pointer">
+          
+          <label 
+            className={`flex items-center space-x-3 ${isBalanceInsufficient ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
             <input
               type="radio"
               name="paymentMethod"
               value="balance"
               checked={paymentMethod === "balance"}
               onChange={(e) => setPaymentMethod(e.target.value)}
+              disabled={isBalanceInsufficient && paymentMethod !== "cod"}
               className="form-radio h-5 w-5 text-[#4e7cb2]"
             />
-            <span className="text-gray-700">Thanh toán bằng số dư ví</span>
+            <div className="flex flex-col">
+              <span className={`font-medium ${isBalanceInsufficient ? 'text-red-500' : 'text-gray-700'}`}>
+                Thanh toán bằng số dư ví ({currentBalance.toLocaleString()} VNĐ)
+              </span>
+              {isBalanceInsufficient && (
+                <span className="text-xs text-red-500 font-semibold mt-1">
+                  Số dư không đủ để thanh toán ({shippingFee.toLocaleString()} VNĐ)
+                </span>
+              )}
+            </div>
           </label>
         </div>
       </div>
@@ -851,7 +830,7 @@ const DeliveryInfo = ({
                         <p className="font-medium text-gray-800">
                           Điểm lấy hàng
                         </p>
-                        <p className="text-gray-600">{pickupAddressState}</p>
+                        <p className="text-gray-600">{pickupAddress}</p>
                         {pickupDetail && (
                           <p className="text-sm text-gray-500">
                             {pickupDetail}
@@ -878,7 +857,7 @@ const DeliveryInfo = ({
                         <p className="font-medium text-gray-800">
                           Điểm giao hàng
                         </p>
-                        <p className="text-gray-600">{deliveryAddressState}</p>
+                        <p className="text-gray-600">{deliveryAddress}</p>
                         {deliveryDetail && (
                           <p className="text-sm text-gray-500">
                             {deliveryDetail}

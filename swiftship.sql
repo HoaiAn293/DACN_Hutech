@@ -85,6 +85,28 @@ INSERT INTO `orders` (`id`, `user_id`, `vehicle`, `pickup_address`, `pickup_addr
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `reviews`
+--
+
+CREATE TABLE `reviews` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `order_id` INT(11) NOT NULL,
+  `user_id` INT(11) NOT NULL,
+  `driver_id` INT(11) NOT NULL,
+  `rating` INT NOT NULL,
+  `comment` TEXT,
+  `images` TEXT DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `order_id` (`order_id`),
+  KEY `user_id` (`user_id`),
+  KEY `driver_id` (`driver_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `transaction_history`
 --
 
@@ -264,6 +286,17 @@ ALTER TABLE `invoices`
 --
 ALTER TABLE `orders`
   ADD CONSTRAINT `fk_orders_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `reviews`
+--
+ALTER TABLE `reviews`
+  ADD CONSTRAINT `fk_reviews_orders`
+    FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_reviews_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_reviews_driver`
+    FOREIGN KEY (`driver_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `transaction_history`

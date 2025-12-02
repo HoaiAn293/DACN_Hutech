@@ -1,18 +1,36 @@
 import React, { useEffect, useState } from "react";
+import ReviewForm from "../Bill/ReviewForm";
+import ReviewDetail from "./ReviewDetail"; // Thêm dòng này
 
 const TabCompleted = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState({}); // {orderId: review}
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem("user"));
     if (!user) return;
 
-    fetch(`http://localhost/DACN_Hutech/backend/get_orders.php?status=Hoàn tất&user_id=${user.id}`)
+    fetch(
+      `http://localhost/DACN_Hutech/backend/get_orders.php?status=Hoàn tất&user_id=${user.id}`
+    )
       .then((res) => res.json())
       .then((data) => {
         setOrders(data);
         setLoading(false);
+
+        // Lấy review cho từng đơn
+        data.forEach((order) => {
+          fetch(
+            `http://localhost/DACN_Hutech/backend/get_review.php?order_id=${order.id}&user_id=${user.id}`
+          )
+            .then((res) => res.json())
+            .then((review) => {
+              setReviews((prev) => ({ ...prev, [order.id]: review }));
+            });
+        });
       })
       .catch((err) => {
         console.error("Lỗi khi tải đơn hàng:", err);
@@ -20,8 +38,36 @@ const TabCompleted = () => {
       });
   }, []);
 
+  const handleReviewSubmit = async (reviewData) => {
+    await fetch("http://localhost/DACN_Hutech/backend/submit_review.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(reviewData),
+    });
+    // Sau khi đánh giá, reload lại review
+    const user = JSON.parse(localStorage.getItem("user"));
+    fetch(
+      `http://localhost/DACN_Hutech/backend/get_review.php?order_id=${reviewData.order_id}&user_id=${user.id}`
+    )
+      .then((res) => res.json())
+      .then((review) => {
+        setReviews((prev) => ({ ...prev, [reviewData.order_id]: review }));
+      });
+  };
+
+  const handleDeleteReview = async (order_id) => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    await fetch("http://localhost/DACN_Hutech/backend/delete_review.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order_id, user_id: user.id }),
+    });
+    setReviews((prev) => ({ ...prev, [order_id]: null }));
+  };
+
   if (loading) return <p>Đang tải đơn hàng...</p>;
-  if (orders.length === 0) return <p>Hiện chưa có đơn hàng trong mục "Hoàn tất".</p>;
+  if (orders.length === 0)
+    return <p>Hiện chưa có đơn hàng trong mục "Hoàn tất".</p>;
 
   return (
     <div className="space-y-6">
@@ -74,26 +120,32 @@ const TabCompleted = () => {
                       Phương thức thanh toán
                     </div>
                     <div className="font-semibold text-[#1a365d]">
-                      {order.invoice_payment_method === 'cod'
-                        ? 'Thanh toán khi nhận hàng'
-                        : order.invoice_payment_method === 'balance'
-                        ? 'Thanh toán bằng ví điện tử'
-                        : order.invoice_payment_method
-                      }
+                      {order.invoice_payment_method === "cod"
+                        ? "Thanh toán khi nhận hàng"
+                        : order.invoice_payment_method === "balance"
+                        ? "Thanh toán bằng ví điện tử"
+                        : order.invoice_payment_method}
                     </div>
                   </div>
                   <div>
                     <div className="text-sm text-gray-600 font-medium mb-2">
                       Tài xế
                     </div>
-                    <div className={order.drivers_name ? "font-semibold text-[#1a365d]" : "font-semibold text-[#e53e3e]"}>                      
-                      {order.drivers_name ? order.drivers_name : "Đang chờ tài xế..."}
+                    <div
+                      className={
+                        order.drivers_name
+                          ? "font-semibold text-[#1a365d]"
+                          : "font-semibold text-[#e53e3e]"
+                      }
+                    >
+                      {order.drivers_name
+                        ? order.drivers_name
+                        : "Đang chờ tài xế..."}
                     </div>
                   </div>
                 </div>
               </div>
             )}
-
             {/* Thông tin người gửi/nhận */}
             <div className="grid grid-cols-2 gap-8 mb-8">
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
@@ -103,12 +155,10 @@ const TabCompleted = () => {
                 <div className="font-semibold text-[#1a365d] mb-2">
                   {order.sender_name}
                 </div>
-                 <div className="text-sm text-gray-600 font-medium mb-3">
+                <div className="text-sm text-gray-600 font-medium mb-3">
                   Số điện thoại
                 </div>
-                <div className="text-gray-600">
-                  {order.sender_phone}
-                </div>
+                <div className="text-gray-600">{order.sender_phone}</div>
               </div>
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
                 <div className="text-sm text-gray-600 font-medium mb-3">
@@ -117,15 +167,12 @@ const TabCompleted = () => {
                 <div className="font-semibold text-[#1a365d] mb-2">
                   {order.receiver_name}
                 </div>
-                 <div className="text-sm text-gray-600 font-medium mb-3">
+                <div className="text-sm text-gray-600 font-medium mb-3">
                   Số điện thoại
                 </div>
-                <div className="text-gray-600">
-                  {order.receiver_phone}
-                </div>
+                <div className="text-gray-600">{order.receiver_phone}</div>
               </div>
             </div>
-
             {/* Thông tin hàng hóa */}
             <div className="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-100">
               <div className="grid grid-cols-2 gap-6">
@@ -147,7 +194,6 @@ const TabCompleted = () => {
                 </div>
               </div>
             </div>
-
             {/* Địa chỉ */}
             <div className="space-y-6">
               <div className="flex items-start gap-4 bg-gray-50 rounded-xl p-6 border border-gray-100">
@@ -181,9 +227,7 @@ const TabCompleted = () => {
                     {order.pickup_address}
                   </div>
                   {order.pickup_detail && (
-                    <div className="text-gray-600">
-                      {order.pickup_detail}
-                    </div>
+                    <div className="text-gray-600">{order.pickup_detail}</div>
                   )}
                 </div>
               </div>
@@ -219,14 +263,58 @@ const TabCompleted = () => {
                     {order.delivery_address}
                   </div>
                   {order.delivery_detail && (
-                    <div className="text-gray-600">
-                      {order.delivery_detail}
-                    </div>
+                    <div className="text-gray-600">{order.delivery_detail}</div>
                   )}
                 </div>
               </div>
             </div>
-
+            {/* Form đánh giá hoặc hiển thị đánh giá */}
+            <div className="mt-8">
+              {reviews[order.id] && reviews[order.id] !== null ? (
+                <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-green-700">
+                      Đánh giá của bạn: {reviews[order.id].rating} sao
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        className="text-blue-600 underline text-sm"
+                        onClick={() => {
+                          setSelectedReview(reviews[order.id]);
+                          setSelectedOrder(order);
+                        }}
+                      >
+                        Xem chi tiết
+                      </button>
+                      <button
+                        className="text-red-600 underline text-sm ml-2"
+                        onClick={() => handleDeleteReview(order.id)}
+                      >
+                        Xóa đánh giá
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-gray-700 mb-2">
+                    {reviews[order.id].comment}
+                  </div>
+                  {reviews[order.id].images &&
+                    reviews[order.id].images.length > 0 && (
+                      <div className="flex gap-2 mt-2">
+                        {reviews[order.id].images.map((img, idx) => (
+                          <img
+                            key={idx}
+                            src={img}
+                            alt={`review-img-${idx}`}
+                            className="w-20 h-20 object-cover rounded border"
+                          />
+                        ))}
+                      </div>
+                    )}
+                </div>
+              ) : (
+                <ReviewForm order={order} onSubmit={handleReviewSubmit} />
+              )}
+            </div>
             {/* Footer */}
             <div className="mt-8 pt-6 border-t border-gray-200">
               <div className="flex items-center gap-2 text-gray-600">
@@ -250,6 +338,14 @@ const TabCompleted = () => {
           </div>
         </div>
       ))}
+      {/* Hiển thị modal chi tiết đánh giá */}
+      {selectedReview && (
+        <ReviewDetail
+          review={selectedReview}
+          order={selectedOrder}
+          onClose={() => setSelectedReview(null)}
+        />
+      )}
     </div>
   );
 };

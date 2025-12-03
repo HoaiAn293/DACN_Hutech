@@ -97,6 +97,7 @@ CREATE TABLE `reviews` (
   `comment` TEXT,
   `images` TEXT DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `suggestions` TEXT DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `order_id` (`order_id`),
   KEY `user_id` (`user_id`),

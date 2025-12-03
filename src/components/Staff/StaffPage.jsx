@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import OrderList from "./OrderList";
 import PerformanceChart from "./PerformanceChart";
-// import DriverManager from "./DriverManager"; // <-- ĐÃ XÓA IMPORT NÀY
+import ReviewManager from "./ReviewManager"; // Thêm dòng này
 
 const StaffPage = () => {
   const [selectedTab, setSelectedTab] = useState("orders"); // Tab mặc định là "Đơn hàng"
@@ -11,8 +11,8 @@ const StaffPage = () => {
     switch (selectedTab) {
       case "orders":
         return <OrderList />;
-      // case "drivers": // <-- ĐÃ XÓA CASE "drivers"
-      //   return <DriverManager />;
+      case "reviews":
+        return <ReviewManager />; // Thêm dòng này
       case "dashboard":
       default:
         return <PerformanceChart />;

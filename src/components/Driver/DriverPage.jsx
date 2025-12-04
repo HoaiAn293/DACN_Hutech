@@ -27,7 +27,6 @@ const DriverPage = () => {
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
-                    // Sắp xếp đơn hàng theo trạng thái ưu tiên: Đang giao -> Đã nhận -> Chờ xác nhận
                     const sortedOrders = data.sort((a, b) => {
                         const statusOrder = { 'Đang giao': 1, 'Đã nhận': 2, 'Chờ xác nhận': 3, 'Hoàn tất': 4, 'Đã huỷ': 5 };
                         return statusOrder[a.status] - statusOrder[b.status];

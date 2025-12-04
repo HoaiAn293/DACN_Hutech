@@ -93,6 +93,19 @@
   border-bottom-left-radius: 5px;
 }
 
+.bot-message a {
+  color: #3b82f6;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.bot-message a:hover {
+  color: #2563eb;
+  text-decoration: none;
+}
+
 .chatbot-input-form {
   display: flex;
   padding: 15px;

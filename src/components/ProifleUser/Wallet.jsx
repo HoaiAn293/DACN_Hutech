@@ -28,9 +28,8 @@ const Wallet = () => {
       .catch(err => console.error('Lỗi khi lấy số dư:', err));
   }, [user]); 
 
-  // --- HÀM NÀY PHẢI ĐƯỢC ĐỊNH NGHĨA NGOÀI HÀM handleTransaction ---
   const showPendingToast = (action) => {
-    toast.info(`Yêu cầu ${action === 'deposit' ? 'nạp tiền' : 'rút tiền'} đang chờ Admin duyệt.`, {
+    toast.info(`Yêu cầu ${action === 'deposit' ? 'nạp tiền' : 'rút tiền'} đang chờ duyệt.`, {
       position: "top-right",
       autoClose: 3000,
       hideProgressBar: false,

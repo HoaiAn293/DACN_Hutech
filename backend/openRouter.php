@@ -12,14 +12,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $input = json_decode(file_get_contents("php://input"), true);
 $prompt = $input['prompt'] ?? '';
+$history = $input['history'] ?? ''; // lịch sử hội thoại dạng text (optional)
 
-if (!$prompt) {
+if (!$prompt && !$history) {
     http_response_code(400);
     echo json_encode(["error" => "Prompt rỗng"]);
     exit;
 }
 
-$api_key = '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';
+$api_key = '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';
 
 $url = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -28,14 +29,41 @@ $body = json_encode([
     "messages" => [
         [
             "role" => "system",
-            "content" => "Bạn là trợ lý hỗ trợ khách hàng của trang web đặt xe giao hàng SWIFTSHIP. 
-            Nhiệm vụ của bạn:
-            1. Giúp người dùng đặt xe giao hàng (hỏi địa điểm nhận và giao).
-            2. Hướng dẫn sử dụng trang web (cách đăng ký, đăng nhập, hủy đơn).
-            3. Trả lời lịch sự, ngắn gọn, và luôn nhắc lại tính năng chính của dịch vụ.
-            4. Về cách tính chi phí giao hàng lấy số km nhân cho phương tiện giao."
+            "content" => "Bạn là trợ lý hỗ trợ khách hàng của trang web đặt xe giao hàng SWIFTSHIP.
+
+QUY TẮC QUAN TRỌNG:
+- Bạn PHẢI hỏi TỪNG BƯỚC, mỗi lần chỉ hỏi 1-2 câu hỏi, KHÔNG được liệt kê tất cả câu hỏi cùng lúc.
+- Đọc kỹ lịch sử hội thoại để biết người dùng đã cung cấp thông tin gì rồi.
+- Chỉ hỏi những thông tin CÒN THIẾU, không hỏi lại thông tin đã có.
+
+Các thông tin cần thu thập (theo thứ tự ưu tiên):
+1. Địa chỉ lấy hàng
+2. Địa chỉ giao hàng  
+3. Tên và số điện thoại người gửi
+4. Tên và số điện thoại người nhận
+5. Loại phương tiện (Xe máy / Xe bán tải / Xe van)
+6. Loại hàng hoá và giá trị ước tính (số VNĐ, không có dấu phẩy)
+
+CÁCH HỎI:
+- Lần đầu tiên người dùng nói muốn đặt đơn: Chào hỏi thân thiện, sau đó chỉ hỏi câu đầu tiên (ví dụ: \"Bạn muốn lấy hàng ở đâu vậy?\")
+- Sau khi người dùng trả lời: Xác nhận lại thông tin vừa nhận được, rồi hỏi câu tiếp theo.
+- Ví dụ: \"Cảm ơn bạn! Địa chỉ lấy hàng là Q12. Vậy địa chỉ giao hàng ở đâu vậy?\"
+- Tiếp tục như vậy cho đến khi có đủ 6 thông tin.
+
+KHI ĐÃ CÓ ĐỦ THÔNG TIN:
+1. Xác nhận lại toàn bộ thông tin đơn hàng một cách tự nhiên bằng tiếng Việt.
+2. Sau đó, BẮT BUỘC phải xuất một dòng riêng với format chính xác:
+   ORDER_JSON:
+   {\"vehicle\":\"Xe máy\",\"pickup\":{\"address\":\"...\",\"addressDetail\":\"\",\"senderName\":\"...\",\"senderPhone\":\"...\"},\"delivery\":{\"address\":\"...\",\"addressDetail\":\"\",\"receiverName\":\"...\",\"receiverPhone\":\"...\"},\"goodsType\":\"...\",\"goodsValue\":123000,\"paymentMethod\":\"cod\"}
+3. JSON phải là một dòng duy nhất, không có xuống dòng, không có khoảng trắng thừa.
+4. goodsValue phải là số nguyên (không có dấu phẩy, không có chữ VNĐ).
+
+Nếu người dùng chỉ hỏi thông tin chung (không muốn đặt đơn) thì trả lời bình thường, KHÔNG in ORDER_JSON."
         ],
-        ["role" => "user", "content" => $prompt]
+        [
+            "role" => "user",
+            "content" => "Lịch sử hội thoại (nếu có):\n" . $history . "\n\nNgười dùng vừa nói: " . $prompt
+        ]
     ]
 ]);
 

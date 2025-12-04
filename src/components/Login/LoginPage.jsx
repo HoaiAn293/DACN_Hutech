@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { GOOGLE_CLIENT_ID } from '../../config/googleAuth';
 
 function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,6 +20,104 @@ function LoginPage() {
     password: ''
   });
   const navigate = useNavigate();
+  const googleButtonRef = useRef(null);
+
+  const handleGoogleSignIn = useCallback(async (response) => {
+    try {
+      const res = await fetch('http://localhost/DACN_Hutech/backend/google_auth.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id_token: response.credential
+        })
+      });
+
+      const data = await res.json();
+      
+      if (data.success) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        toast.success(data.message || "Đăng nhập thành công!", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+
+        // Điều hướng theo role
+        if (data.user.role === 'admin') {
+          navigate('/admin');
+        } else if (data.user.role === 'employee') {
+          navigate('/staff');
+        } else if (data.user.role === 'driver') {
+          navigate('/driver');
+        } else {
+          navigate('/order');
+        }
+      } else {
+        toast.error(data.message || "Đăng nhập thất bại!", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
+    } catch (err) {
+      console.error('Google login error:', err);
+      toast.error("Đã có lỗi xảy ra khi đăng nhập với Google!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    // Khởi tạo Google Sign-In khi component mount
+    const initGoogleSignIn = () => {
+      if (window.google && googleButtonRef.current) {
+        // Kiểm tra Client ID đã được cấu hình chưa
+        if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('YOUR_GOOGLE_CLIENT_ID')) {
+          console.error('Google Client ID chưa được cấu hình! Vui lòng cập nhật trong src/config/googleAuth.js');
+          toast.error('Google Client ID chưa được cấu hình! Vui lòng kiểm tra cấu hình.', {
+            position: "top-right",
+            autoClose: 5000,
+          });
+          return;
+        }
+
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleSignIn,
+        });
+
+        window.google.accounts.id.renderButton(
+          googleButtonRef.current,
+          {
+            theme: 'outline',
+            size: 'large',
+            width: '100%',
+            text: 'signin_with',
+            locale: 'vi'
+          }
+        );
+      }
+    };
+
+    // Đợi Google script load xong
+    if (window.google) {
+      initGoogleSignIn();
+    } else {
+      // Nếu script chưa load, đợi một chút
+      const checkGoogle = setInterval(() => {
+        if (window.google) {
+          initGoogleSignIn();
+          clearInterval(checkGoogle);
+        }
+      }, 100);
+
+      // Timeout sau 5 giây
+      setTimeout(() => {
+        clearInterval(checkGoogle);
+      }, 5000);
+    }
+  }, [handleGoogleSignIn]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -310,6 +409,19 @@ function LoginPage() {
             {isLogin ? 'Đăng nhập' : 'Đăng ký'}
           </button>
         </form>
+
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/30"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-transparent text-white/70">Hoặc</span>
+            </div>
+          </div>
+          
+          <div className="mt-4" ref={googleButtonRef}></div>
+        </div>
 
         <div className="mt-4 text-center">
           <button

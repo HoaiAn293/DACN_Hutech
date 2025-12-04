@@ -46,11 +46,29 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
   const [routeDistance, setRouteDistance] = useState(null);
   const [pickupAddress, setPickupAddress] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [etaMinutes, setEtaMinutes] = useState(null); // thời gian ước tính (phút)
+  const [aiExplanation, setAiExplanation] = useState(''); // giải thích từ AI
+  const [loadingAi, setLoadingAi] = useState(false);
   
   const [activeMarkerType, setActiveMarkerType] = useState('pickup');
 
   const handleRouteFound = (distance) => {
     setRouteDistance(distance);
+
+    // ƯỚC TÍNH THỜI GIAN: giả sử tốc độ trung bình 25km/h, nếu giờ cao điểm thì thấp hơn
+    const now = new Date();
+    const hour = now.getHours();
+    let speed = 25; // km/h
+
+    if ((hour >= 7 && hour <= 9) || (hour >= 16 && hour <= 19)) {
+      // giờ cao điểm -> giảm tốc độ
+      speed = 18;
+    }
+
+    const hours = distance / speed;
+    const minutes = Math.round(hours * 60);
+    setEtaMinutes(minutes);
+
     if (onDistanceChange) {
       onDistanceChange(distance);
     }
@@ -118,6 +136,8 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
           setActiveMarkerType('delivery'); 
       }
       setRouteDistance(null); 
+      setEtaMinutes(null);
+      setAiExplanation('');
       onDistanceChange(0);
   };
 
@@ -127,6 +147,8 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
     setPickupAddress('');
     setDeliveryAddress('');
     setRouteDistance(null);
+    setEtaMinutes(null);
+    setAiExplanation('');
     setActiveMarkerType('pickup');
     if (onAddressChange) {
       onAddressChange('', true);
@@ -134,6 +156,51 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
     }
     if (onDistanceChange) {
       onDistanceChange(0);
+    }
+  };
+
+  const handleAskAiForRoute = async () => {
+    if (!pickupAddress || !deliveryAddress || !routeDistance || !etaMinutes) {
+      alert('Vui lòng chọn đầy đủ điểm A, B và để hệ thống tính xong quãng đường trước khi hỏi AI.');
+      return;
+    }
+
+    try {
+      setLoadingAi(true);
+      setAiExplanation('');
+
+      const now = new Date();
+      const hour = now.getHours();
+      let timeLabel = 'thời gian bình thường';
+      if ((hour >= 7 && hour <= 9) || (hour >= 16 && hour <= 19)) {
+        timeLabel = 'giờ cao điểm, đường có thể đông';
+      }
+
+      const response = await fetch('http://localhost/DACN_Hutech/backend/route_ai_explain.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pickupAddress,
+          deliveryAddress,
+          distanceKm: routeDistance,
+          etaMinutes,
+          timeLabel,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.ok) {
+        setAiExplanation(data.text);
+      } else {
+        setAiExplanation(data.text || 'Không nhận được giải thích từ AI.');
+      }
+    } catch (error) {
+      console.error('Lỗi khi gọi AI giải thích lộ trình:', error);
+      setAiExplanation('Có lỗi xảy ra khi kết nối AI. Vui lòng thử lại sau.');
+    } finally {
+      setLoadingAi(false);
     }
   };
 
@@ -292,10 +359,32 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
         )}
       </MapContainer>
       {routeDistance !== null && routeDistance > 0 && (
-        <div className="mt-4 p-4 bg-white rounded-lg shadow-md">
+        <div className="mt-4 p-4 bg-white rounded-lg shadow-md space-y-3">
           <p className="text-[#4e7cb2] font-semibold">
             Khoảng cách đường đi thực tế: {routeDistance.toFixed(2)} km
           </p>
+          {etaMinutes !== null && (
+            <p className="text-gray-700">
+              Thời gian giao hàng ước tính: khoảng <span className="font-semibold">{etaMinutes} phút</span>
+              {' '}
+              (dựa trên tốc độ trung bình và khung giờ hiện tại)
+            </p>
+          )}
+
+          <button
+            onClick={handleAskAiForRoute}
+            disabled={loadingAi}
+            className={`mt-2 px-4 py-2 rounded-lg text-white font-medium shadow-md transition-all duration-300 
+              ${loadingAi ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}`}
+          >
+            {loadingAi ? 'AI đang phân tích lộ trình...' : 'Hỏi AI giải thích lộ trình'}
+          </button>
+
+          {aiExplanation && (
+            <div className="mt-2 p-3 border border-purple-200 rounded-lg bg-purple-50 text-sm text-gray-800 whitespace-pre-line">
+              {aiExplanation}
+            </div>
+          )}
         </div>
       )}
     </div>

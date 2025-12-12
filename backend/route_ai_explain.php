@@ -77,7 +77,7 @@ try {
     $response = file_get_contents($url, false, $context);
 
     if ($response === false) {
-        // Không ném exception để tránh trả về 500, trả về ok=false cho frontend
+        
         echo json_encode([
             "ok"    => false,
             "error" => "Không thể kết nối đến OpenRouter API",

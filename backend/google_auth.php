@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (json_last_error() !== JSON_ERROR_NONE) {
         echo json_encode(["success" => false, "message" => "Dữ liệu không hợp lệ"]);
         exit();
+       
     }
 
     $id_token = $data['id_token'] ?? '';

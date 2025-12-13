@@ -2,10 +2,17 @@ import React, { useState, useEffect } from "react";
 import ProductType from "./ProductType";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+// Import component gợi ý địa chỉ
+import AddressAutocomplete from './AddressAutocomplete';
+
 const DeliveryInfo = ({
   selectedVehicle,
   pickupAddress,
+  setPickupAddress, // PROP MỚI: Để cập nhật text địa chỉ lấy
   deliveryAddress,
+  setDeliveryAddress, // PROP MỚI: Để cập nhật text địa chỉ giao
+  onPickupLocationChange, // PROP MỚI: Để cập nhật tọa độ lên Map (nếu có)
+  onDeliveryLocationChange, // PROP MỚI: Để cập nhật tọa độ lên Map (nếu có)
   distance,
 }) => {
   const [selectedType, setSelectedType] = useState("");
@@ -66,10 +73,10 @@ const DeliveryInfo = ({
 
   const validateForm = () => {
     const newErrors = {
-      pickupAddress: !pickupAddress.trim(),
+      pickupAddress: !pickupAddress?.trim(),
       senderName: !senderName.trim(),
       senderPhone: !senderName.trim() || !isValidPhone(senderPhone),
-      deliveryAddress: !deliveryAddress.trim(),
+      deliveryAddress: !deliveryAddress?.trim(),
       receiverName: !receiverName.trim(),
       receiverPhone: !receiverName.trim() || !isValidPhone(receiverPhone),
       selectedType: !selectedType,
@@ -80,6 +87,24 @@ const DeliveryInfo = ({
     return !Object.values(newErrors).some((error) => error);
   };
 
+  // --- HÀM XỬ LÝ KHI CHỌN ĐỊA CHỈ TỪ AUTOCOMPLETE ---
+  const handlePickupSelect = (address, coordinates) => {
+    if (setPickupAddress) setPickupAddress(address);
+    // Nếu cha có truyền hàm xử lý tọa độ (để update Map) thì gọi
+    if (onPickupLocationChange && coordinates) {
+      onPickupLocationChange({ lat: parseFloat(coordinates.lat), lng: parseFloat(coordinates.lon) });
+    }
+  };
+
+  const handleDeliverySelect = (address, coordinates) => {
+    if (setDeliveryAddress) setDeliveryAddress(address);
+    // Nếu cha có truyền hàm xử lý tọa độ (để update Map) thì gọi
+    if (onDeliveryLocationChange && coordinates) {
+      onDeliveryLocationChange({ lat: parseFloat(coordinates.lat), lng: parseFloat(coordinates.lon) });
+    }
+  };
+  // ----------------------------------------------------
+
   const handleSubmit = async () => {
     const isBalanceInsufficient = paymentMethod === 'balance' && shippingFee > currentBalance;
     
@@ -87,27 +112,7 @@ const DeliveryInfo = ({
       toast.error("Vui lòng chọn loại xe trước khi xác nhận!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
         className: "bg-red-50 text-red-700",
-        bodyClassName: "flex items-center gap-2",
-        icon: (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-red-500"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clipRule="evenodd"
-            />
-          </svg>
-        ),
       });
       return;
     }
@@ -116,40 +121,15 @@ const DeliveryInfo = ({
       toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
         className: "bg-red-50 text-red-700",
-        bodyClassName: "flex items-center gap-2",
-        icon: (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-red-500"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clipRule="evenodd"
-            />
-          </svg>
-        ),
       });
       return;
     }
     
-    // KIỂM TRA SỐ DƯ NẾU THANH TOÁN BẰNG VÍ
     if (isBalanceInsufficient) {
       toast.error(
-        "Số dư ví không đủ để thanh toán phí vận chuyển. Vui lòng chọn COD hoặc nạp thêm tiền.",
-        {
-          position: "top-right",
-          autoClose: 5000,
-          className: "bg-red-50 text-red-700",
-        }
+        "Số dư ví không đủ. Vui lòng chọn COD hoặc nạp thêm tiền.",
+        { position: "top-right", autoClose: 5000, className: "bg-red-50 text-red-700" }
       );
       return;
     }
@@ -162,34 +142,13 @@ const DeliveryInfo = ({
       toast.error("Vui lòng đăng nhập để đặt đơn hàng!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
         className: "bg-red-50 text-red-700",
-        bodyClassName: "flex items-center gap-2",
-        icon: (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-red-500"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clipRule="evenodd"
-            />
-          </svg>
-        ),
       });
       return;
     }
 
     if (paymentMethod === "balance") {
       try {
-        // GỌI API TRỪ TIỀN TRỰC TIẾP (INSTANT WITHDRAW)
         const deductResponse = await fetch(
           "http://localhost/DACN_Hutech/backend/instant_withdraw.php", 
           {
@@ -204,13 +163,11 @@ const DeliveryInfo = ({
 
         const deductResult = await deductResponse.json();
         if (!deductResult.success) {
-          // Nếu trừ tiền thất bại (chủ yếu do lỗi DB hoặc lỗi API)
-          toast.error(deductResult.message || "Thanh toán ví thất bại. Vui lòng thử lại sau.");
+          toast.error(deductResult.message || "Thanh toán ví thất bại.");
           setShowConfirmModal(false);
           return;
         }
         
-        // Cập nhật số dư sau khi thanh toán thành công
         const balanceResponse = await fetch(`http://localhost/DACN_Hutech/backend/get_balance.php?user_id=${userId}`);
         const balanceData = await balanceResponse.json();
         if (balanceData.success) {
@@ -218,36 +175,11 @@ const DeliveryInfo = ({
         }
 
       } catch {
-        toast.error("Không thể kết nối API thanh toán ví. Vui lòng thử lại sau.", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          className: "bg-red-50 text-red-700",
-          bodyClassName: "flex items-center gap-2",
-          icon: (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-red-500"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ),
-        });
+        toast.error("Lỗi kết nối API thanh toán ví.");
         return;
       }
     }
 
-    // Tạo đơn hàng sau khi xử lý thanh toán thành công hoặc khi chọn COD
     const payload = {
       user_id: userId,
       vehicle: selectedVehicle,
@@ -267,7 +199,7 @@ const DeliveryInfo = ({
       },
       paymentMethod: paymentMethod,
       shippingFee: shippingFee,
-      isPaid: paymentMethod === "balance", // TRUE nếu đã trừ tiền thành công
+      isPaid: paymentMethod === "balance",
     };
 
     try {
@@ -283,7 +215,6 @@ const DeliveryInfo = ({
       const result = await response.json();
       setShowConfirmModal(false);
       if (result.success && result.order_id) {
-        // Tạo hóa đơn
         const invoicePayload = {
           order_id: result.order_id,
           user_id: userId,
@@ -303,87 +234,19 @@ const DeliveryInfo = ({
 
         toast.success(
           paymentMethod === "cod"
-            ? "Đặt đơn thành công! Vui lòng thanh toán khi nhận hàng."
-            : "Đặt đơn và thanh toán thành công!", // THÔNG BÁO THÀNH CÔNG (TỰ ĐỘNG TRỪ)
+            ? "Đặt đơn thành công!"
+            : "Đặt đơn và thanh toán thành công!",
           {
             position: "top-right",
             autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
             className: "bg-green-50 text-green-700",
-            bodyClassName: "flex items-center gap-2",
-            icon: (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-green-500"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            ),
           }
         );
       } else {
-        toast.error(result.message || "Có lỗi xảy ra khi đặt đơn.", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          className: "bg-red-50 text-red-700",
-          bodyClassName: "flex items-center gap-2",
-          icon: (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-red-500"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-          ),
-        });
+        toast.error(result.message || "Có lỗi xảy ra khi đặt đơn.");
       }
     } catch {
-      toast.error("Không thể gửi đơn hàng.", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        className: "bg-red-50 text-red-700",
-        bodyClassName: "flex items-center gap-2",
-        icon: (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-red-500"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clipRule="evenodd"
-            />
-          </svg>
-        ),
-      });
+      toast.error("Không thể gửi đơn hàng.");
     }
   };
 
@@ -407,27 +270,21 @@ const DeliveryInfo = ({
     const calculateShippingFee = () => {
       if (selectedVehicle && distance) {
         const pricePerKm =
-          selectedVehicle === "Xe Máy"
-            ? 5000
-            : selectedVehicle === "Xe Van"
-            ? 10000
-            : selectedVehicle === "Xe Bán Tải"
-            ? 15000
-            : selectedVehicle === "Xe Tải"
-            ? 20000
+          selectedVehicle === "Xe Máy" ? 5000
+            : selectedVehicle === "Xe Van" ? 10000
+            : selectedVehicle === "Xe Bán Tải" ? 15000
+            : selectedVehicle === "Xe Tải" ? 20000
             : 5000;
         const baseFee = Math.round(distance * pricePerKm);
         const maxFee = 300000;
-        const finalFee = Math.min(baseFee, maxFee);
-
-        setShippingFee(finalFee);
+        setShippingFee(Math.min(baseFee, maxFee));
       }
     };
 
     calculateShippingFee();
   }, [selectedVehicle, distance]);
   
-  const isBalanceInsufficient = shippingFee > currentBalance; // LOGIC CHECK SỐ DƯ
+  const isBalanceInsufficient = shippingFee > currentBalance;
   
   return (
     <div className="w-full mt-10 pr-6">
@@ -438,25 +295,9 @@ const DeliveryInfo = ({
       {/* Địa điểm lấy hàng */}
       <div className="mb-8 bg-white py-6 rounded-2xl px-6 shadow-lg border border-gray-200">
         <div className="flex items-center gap-2 mb-6">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-[#4e7cb2]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-            />
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#4e7cb2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           <p className="font-semibold text-[16px] text-[#4e7cb2]">
             Địa điểm lấy hàng
@@ -464,18 +305,15 @@ const DeliveryInfo = ({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="relative">
-            <input
-              type="text"
-              placeholder="Địa chỉ"
-              value={pickupAddress}
-              readOnly
-              className={`rounded-lg p-3 w-full bg-gray-100 border ${
-                errors.pickupAddress ? "border-red-500" : "border-gray-300"
-              } focus:border-[#4e7cb2] focus:ring-1 focus:ring-[#4e7cb2] outline-none transition-all`}
-              required
+            {/* THAY THẾ INPUT CŨ BẰNG AUTOCOMPLETE */}
+            <AddressAutocomplete 
+              label=""
+              placeholder="Nhập địa chỉ lấy hàng..."
+              value={pickupAddress} 
+              onChange={handlePickupSelect} 
             />
             {errors.pickupAddress && (
-              <p className="text-red-500 text-sm mt-1">Vui lòng chọn địa chỉ trên bản đồ</p>
+              <p className="text-red-500 text-sm mt-1">Vui lòng nhập hoặc chọn địa chỉ</p>
             )}
           </div>
           <div className="relative">
@@ -507,7 +345,6 @@ const DeliveryInfo = ({
               </p>
             )}
           </div>
-          {/* SENDER PHONE INPUT: ĐÃ TỐI ƯU */}
           <div>
             <div className={`flex rounded-lg overflow-hidden border ${
                 errors.senderPhone ? "border-red-500" : "border-gray-300"
@@ -529,38 +366,19 @@ const DeliveryInfo = ({
             </div>
             {errors.senderPhone && (
               <p className="text-red-500 text-sm mt-1">
-                {!senderPhone.trim()
-                  ? "Vui lòng nhập số điện thoại"
-                  : "Số điện thoại không hợp lệ (phải bắt đầu bằng số 0 và có 10 số)"}
+                Số điện thoại không hợp lệ
               </p>
             )}
           </div>
-          {/* END SENDER PHONE INPUT */}
         </div>
       </div>
 
       {/* Địa điểm giao hàng */}
       <div className="mb-8 bg-white py-6 rounded-2xl px-6 shadow-lg border border-gray-200">
         <div className="flex items-center gap-2 mb-6">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-[#4e7cb2]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-            />
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#4e7cb2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           <p className="font-semibold text-[16px] text-[#4e7cb2]">
             Bạn muốn giao hàng đến
@@ -568,18 +386,15 @@ const DeliveryInfo = ({
         </div>
         <div className="grid grid-cols-2 gap-4 relative">
           <div>
-            <input
-              type="text"
-              placeholder="Địa chỉ"
-              value={deliveryAddress}
-              readOnly
-              className={`rounded-lg p-3 w-full bg-gray-100 border ${
-                errors.deliveryAddress ? "border-red-500" : "border-gray-300"
-              } focus:border-[#4e7cb2] focus:ring-1 focus:ring-[#4e7cb2] outline-none transition-all`}
-              required
+            {/* THAY THẾ INPUT CŨ BẰNG AUTOCOMPLETE */}
+             <AddressAutocomplete 
+              label=""
+              placeholder="Nhập địa chỉ giao hàng..."
+              value={deliveryAddress} 
+              onChange={handleDeliverySelect} 
             />
             {errors.deliveryAddress && (
-              <p className="text-red-500 text-sm mt-1">Vui lòng chọn địa chỉ trên bản đồ</p>
+              <p className="text-red-500 text-sm mt-1">Vui lòng nhập hoặc chọn địa chỉ</p>
             )}
           </div>
           <div className="relative">
@@ -588,7 +403,7 @@ const DeliveryInfo = ({
               placeholder="Chi tiết địa chỉ (không bắt buộc)"
               value={deliveryDetail}
               onChange={(e) => setDeliveryDetail(e.target.value)}
-              className="rounded-lg p-3 w-full bg-gray-50 border border-gray-300 focus:border-[#4e7cb2] focus:ring-1 focus:ridivg-[#4e7cb2] outline-none transition-all text-gray-600"
+              className="rounded-lg p-3 w-full bg-gray-50 border border-gray-300 focus:border-[#4e7cb2] focus:ring-1 focus:ring-[#4e7cb2] outline-none transition-all text-gray-600"
             />
           </div>
           <div>
@@ -608,7 +423,6 @@ const DeliveryInfo = ({
               </p>
             )}
           </div>
-          {/* RECEIVER PHONE INPUT: ĐÃ TỐI ƯU */}
           <div>
             <div className={`flex rounded-lg overflow-hidden border ${
                 errors.receiverPhone ? "border-red-500" : "border-gray-300"
@@ -629,13 +443,11 @@ const DeliveryInfo = ({
             </div>
             {errors.receiverPhone && (
               <p className="text-red-500 text-sm mt-1">
-                {!receiverPhone.trim()
-                  ? "Vui lòng nhập số điện thoại"
-                  : "Số điện thoại không hợp lệ (phải bắt đầu bằng số 0 và có 10 số)"}
+                Số điện thoại không hợp lệ
               </p>
             )}
           </div>
-          {/* END RECEIVER PHONE INPUT */}
+          
           <ProductType value={selectedType} onChange={setSelectedType} />
 
           <div className="relative">
@@ -655,17 +467,8 @@ const DeliveryInfo = ({
             </div>
             {valueError && (
               <div className="absolute -bottom-6 right-0 bg-red-50 border border-red-200 text-red-700 px-3 py-1 rounded-md text-sm flex items-center gap-2 shadow-sm ">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <span>Tối đa 30.000.000 VNĐ</span>
               </div>
@@ -674,22 +477,12 @@ const DeliveryInfo = ({
           </div>
         </div>
       </div>
+
       {/* Phương thức thanh toán */}
       <div className="mb-8 bg-white py-6 rounded-2xl px-6 shadow-lg border border-gray-200">
         <div className="flex items-center gap-2 mb-6">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-[#4e7cb2]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-            />
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[#4e7cb2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           <p className="font-semibold text-[16px] text-[#4e7cb2]">
             Phương thức thanh toán
@@ -750,19 +543,8 @@ const DeliveryInfo = ({
             <div className="bg-[#4e7cb2] px-6 py-4 rounded-t-2xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                   <h3 className="text-lg font-semibold text-white">
                     Hóa đơn vận chuyển
@@ -772,17 +554,8 @@ const DeliveryInfo = ({
                   onClick={() => setShowConfirmModal(false)}
                   className="text-white hover:text-gray-200"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
                 </button>
               </div>
@@ -797,19 +570,8 @@ const DeliveryInfo = ({
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-dashed border-gray-200">
                   <div className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-[#4e7cb2]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#4e7cb2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span className="font-medium text-gray-800">
                       Chi tiết vận chuyển
@@ -879,19 +641,8 @@ const DeliveryInfo = ({
               <div className="space-y-3 pt-4">
                 <div className="flex items-center justify-between pb-2 border-b border-dashed border-gray-200">
                   <div className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-[#4e7cb2]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10l8 4"
-                      />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#4e7cb2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10l8 4" />
                     </svg>
                     <span className="font-medium text-gray-800">
                       Thông tin hàng hóa
@@ -918,19 +669,8 @@ const DeliveryInfo = ({
               <div className="space-y-3 pt-4">
                 <div className="flex items-center justify-between pb-2 border-b border-dashed border-gray-200">
                   <div className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-emerald-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                     <span className="font-medium text-gray-800">
                       Chi phí & Thanh toán
@@ -945,21 +685,9 @@ const DeliveryInfo = ({
                         {shippingFee.toLocaleString()} VNĐ
                       </span>
                       <p className="text-sm text-gray-500 mt-1">
-                        (Tính theo: {distance.toFixed(2)} km × 20.000 VNĐ/km)
+                        (Tính theo: {distance.toFixed(2)} km)
                       </p>
                     </div>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span className="text-gray-600">Loại hàng</span>
-                    <span className="font-medium text-gray-800">
-                      {selectedType}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Giá trị hàng</span>
-                    <span className="font-medium text-gray-800">
-                      {goodsValue === '' ? '0' : goodsValue.toLocaleString()} VNĐ
-                    </span>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                     <span className="text-gray-600">

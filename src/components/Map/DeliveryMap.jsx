@@ -4,8 +4,9 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import 'leaflet-routing-machine';
-import { X } from 'lucide-react'; // Import icon X
+import { X } from 'lucide-react';
 
+// Component xử lý định tuyến (Routing)
 const RoutingMachine = ({ pickupPoint, deliveryPoint, onRouteFound }) => {
   const map = useMap();
   useEffect(() => {
@@ -52,10 +53,14 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
   
   const [activeMarkerType, setActiveMarkerType] = useState('pickup');
 
+  // State lưu danh sách tài xế
+  const [drivers, setDrivers] = useState([]);
+
+  // Hàm xử lý khi tìm thấy lộ trình
   const handleRouteFound = (distance) => {
     setRouteDistance(distance);
 
-    // ƯỚC TÍNH THỜI GIAN: giả sử tốc độ trung bình 25km/h, nếu giờ cao điểm thì thấp hơn
+    // ƯỚC TÍNH THỜI GIAN: giả sử tốc độ trung bình 25km/h
     const now = new Date();
     const hour = now.getHours();
     let speed = 25; // km/h
@@ -74,6 +79,7 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
     }
   };
 
+  // Tìm kiếm địa chỉ từ text
   const searchLocation = async (address, isPickup) => {
     try {
       const response = await fetch(
@@ -101,6 +107,7 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
     }
   };
 
+  // Lấy địa chỉ từ tọa độ
   const getAddressFromCoordinates = async (lat, lng, isPickup) => {
     try {
       const response = await fetch(
@@ -176,6 +183,7 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
         timeLabel = 'giờ cao điểm, đường có thể đông';
       }
 
+      // Lưu ý: Đảm bảo đường dẫn backend này đúng với cấu hình của bạn
       const response = await fetch('http://localhost/DACN_Hutech/backend/route_ai_explain.php', {
         method: 'POST',
         headers: {
@@ -203,6 +211,31 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
       setLoadingAi(false);
     }
   };
+
+  // --- MỚI: Fetch danh sách tài xế từ backend ---
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      try {
+        // Gọi API lấy danh sách tài xế (đã bao gồm tọa độ current_lat, current_lng)
+        const response = await fetch('http://localhost/DACN_Hutech/backend/get_drivers.php');
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          setDrivers(data);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách tài xế:', error);
+      }
+    };
+
+    fetchDrivers(); // Gọi lần đầu
+
+    // Cập nhật vị trí mỗi 10 giây
+    const intervalId = setInterval(fetchDrivers, 10000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+  // ----------------------------------------------
 
   const MapClickHandler = () => {
     useMapEvents({
@@ -240,6 +273,14 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
     shadowSize: [41, 41]
+  });
+
+  // --- MỚI: Icon tùy chỉnh cho Tài xế (Xe tải) ---
+  const driverIcon = new L.Icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063822.png', 
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -20],
   });
 
 
@@ -340,16 +381,39 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         <MapClickHandler />
+        
+        {/* Điểm A */}
         {pickupPoint && (
           <Marker position={pickupPoint} icon={pickupIcon}>
             <Popup>Điểm A: {pickupAddress}</Popup>
           </Marker>
         )}
+        
+        {/* Điểm B */}
         {deliveryPoint && (
           <Marker position={deliveryPoint} icon={deliveryIcon}>
             <Popup>Điểm B: {deliveryAddress}</Popup>
           </Marker>
         )}
+
+        {/* --- MỚI: Render danh sách tài xế --- */}
+        {drivers.map((driver) => (
+          <Marker 
+            key={driver.id} 
+            position={[driver.current_lat, driver.current_lng]} 
+            icon={driverIcon}
+          >
+            <Popup>
+              <div className="font-sans text-sm">
+                <strong>Tài xế: {driver.full_name}</strong><br/>
+                SĐT: {driver.phone_number}<br/>
+                <span className="text-green-600 font-bold">Đang hoạt động</span>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+        {/* ------------------------------------ */}
+
         {pickupPoint && deliveryPoint && (
           <RoutingMachine
             pickupPoint={pickupPoint}

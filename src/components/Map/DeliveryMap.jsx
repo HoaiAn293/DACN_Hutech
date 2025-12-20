@@ -236,7 +236,6 @@ const DeliveryMap = ({ onAddressChange, onDistanceChange }) => {
                   </div>
                 </div>
                 
-                {/* Đã xóa nút "Chọn tài xế này" */}
               </div>
             </Popup>
           </Marker>

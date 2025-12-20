@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: localhost
--- Thời gian đã tạo: Th10 17, 2025 lúc 04:19 AM
+-- Thời gian đã tạo: Th12 19, 2025 lúc 11:06 AM
 -- Phiên bản máy phục vụ: 10.4.28-MariaDB
 -- Phiên bản PHP: 8.2.4
 
@@ -44,7 +44,8 @@ CREATE TABLE `invoices` (
 
 INSERT INTO `invoices` (`id`, `order_id`, `invoice_number`, `user_id`, `amount`, `payment_method`, `status`, `created_at`) VALUES
 (36, 42, 'INV-000042', 31, 21856, 'balance', 'paid', '2025-11-17 01:48:42'),
-(37, 43, 'INV-000043', 31, 21469, 'balance', 'paid', '2025-11-17 03:16:39');
+(37, 43, 'INV-000043', 31, 21469, 'balance', 'paid', '2025-11-17 03:16:39'),
+(38, 44, 'INV-000044', 31, 84706, 'cod', 'pending', '2025-12-19 10:03:59');
 
 -- --------------------------------------------------------
 
@@ -80,7 +81,8 @@ CREATE TABLE `orders` (
 
 INSERT INTO `orders` (`id`, `user_id`, `vehicle`, `pickup_address`, `pickup_address_detail`, `sender_name`, `sender_phone`, `delivery_address`, `delivery_address_detail`, `receiver_name`, `receiver_phone`, `goods_type`, `goods_value`, `payment_method`, `shipping_fee`, `is_paid`, `created_at`, `status`, `driver_id`) VALUES
 (42, 31, 'Xe Máy', 'Tan Son Nhat International Airport, Hẻm 457/14 Tân Sơn, Phường An Hội Tây, Thuận An, Ho Chi Minh City, 71509, Vietnam', '', 'Đạt', '0394391204', 'Hẻm 43R Hồ Văn Huê, Phường Đức Nhuận, Thủ Đức, Ho Chi Minh City, 72215, Vietnam', '', 'Ân', '0965748370', 'Tài liệu / Giấy tờ', 33000, 'balance', 21856, 1, '2025-11-17 01:48:42', 'Hoàn tất', 31),
-(43, 31, 'Xe Máy', 'Tan Son Nhat International Airport, Nguyễn Oanh, Phường Hạnh Thông, Ho Chi Minh City, 70048, Vietnam', '', 'Thành Đạt', '0394391204', 'Hẻm 43R Hồ Văn Huê, Phường Đức Nhuận, Thủ Đức, Ho Chi Minh City, 72215, Vietnam', '', 'Kiển Đạt', '0965748370', 'Thực phẩm', 47000, 'balance', 21469, 1, '2025-11-17 03:16:39', 'Đã nhận', 110);
+(43, 31, 'Xe Máy', 'Tan Son Nhat International Airport, Nguyễn Oanh, Phường Hạnh Thông, Ho Chi Minh City, 70048, Vietnam', '', 'Thành Đạt', '0394391204', 'Hẻm 43R Hồ Văn Huê, Phường Đức Nhuận, Thủ Đức, Ho Chi Minh City, 72215, Vietnam', '', 'Kiển Đạt', '0965748370', 'Thực phẩm', 47000, 'balance', 21469, 1, '2025-11-17 03:16:39', 'Đã nhận', 110),
+(44, 31, 'Xe Van', 'Hẻm 70/28/2 Nguyễn Sỹ Sách, Phường Tân Sơn, Thuận An, Ho Chi Minh City, 71509, Vietnam', '', 'Test1', '0123456788', 'Lane B (Departure Terminal T2), Phường Tân Sơn Hòa, Thuận An, Ho Chi Minh City, 72100, Vietnam', '', 'Test2', '0123456789', 'Đồ dễ vỡ', 20000, 'cod', 84706, 0, '2025-12-19 10:03:59', 'Chờ xác nhận', NULL);
 
 -- --------------------------------------------------------
 
@@ -89,21 +91,16 @@ INSERT INTO `orders` (`id`, `user_id`, `vehicle`, `pickup_address`, `pickup_addr
 --
 
 CREATE TABLE `reviews` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `order_id` INT(11) NOT NULL,
-  `user_id` INT(11) NOT NULL,
-  `driver_id` INT(11) NOT NULL,
-  `rating` INT NOT NULL,
-  `comment` TEXT,
-  `images` TEXT DEFAULT NULL,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `suggestions` TEXT DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `order_id` (`order_id`),
-  KEY `user_id` (`user_id`),
-  KEY `driver_id` (`driver_id`)
+  `id` int(11) NOT NULL,
+  `order_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `driver_id` int(11) NOT NULL,
+  `rating` int(11) NOT NULL,
+  `comment` text DEFAULT NULL,
+  `images` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `suggestions` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 
 -- --------------------------------------------------------
 
@@ -148,7 +145,8 @@ INSERT INTO `transaction_history` (`id`, `user_id`, `type`, `amount`, `status`, 
 (50, 31, 'withdraw', 49401, 'approved', '2025-11-17 01:44:58'),
 (51, 31, 'deposit', 500000, 'approved', '2025-11-17 01:46:16'),
 (52, 31, 'withdraw', 21856, 'approved', '2025-11-17 01:48:42'),
-(53, 31, 'withdraw', 21469, 'approved', '2025-11-17 03:16:39');
+(53, 31, 'withdraw', 21469, 'approved', '2025-11-17 03:16:39'),
+(54, 31, 'withdraw', 50000, 'pending', '2025-12-13 06:17:51');
 
 -- --------------------------------------------------------
 
@@ -163,24 +161,28 @@ CREATE TABLE `users` (
   `email` varchar(255) NOT NULL,
   `cccd` varchar(20) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
+  `google_id` varchar(255) DEFAULT NULL,
+  `avatar` varchar(500) DEFAULT NULL,
   `role` enum('user','employee','admin','driver') NOT NULL DEFAULT 'user',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `balance` int(11) DEFAULT 0,
-  `status` enum('active','locked') NOT NULL DEFAULT 'active'
+  `status` enum('active','locked','pending') NOT NULL DEFAULT 'pending',
+  `current_lat` double DEFAULT NULL,
+  `current_lng` double DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `users`
 --
 
-INSERT INTO `users` (`id`, `full_name`, `phone_number`, `email`, `cccd`, `password`, `role`, `created_at`, `balance`, `status`) VALUES
-(24, 'ADMIN', '', 'admin@gmail.com', NULL, '$2y$10$JWgB8OZFiX5ruBA02p6NJuob3mW9IOi06wlVmWTa4YwN.FmPyY4Hq', 'admin', '2025-05-12 14:40:09', 0, 'active'),
-(25, 'Trịnh Kiển Đạt', '0965748370', 'kiendat@gmail.com', NULL, '$2y$10$gBG9DhSmPGSzXwcnTik7W.GHxuaT5DyZaZ.TwA7bwiS5F4608A5fK', 'employee', '2025-05-12 14:41:03', 0, 'active'),
-(26, 'Hoài Ân', '0912341231', 'HoaiAn123@gmail.com', NULL, '$2y$10$5qButFSTrMLSlMWNmy2cyuW2jqAXlgaCTskOym.z7PD10obb5uOpK', 'user', '2025-05-27 10:41:56', 163793, 'active'),
-(31, 'Huỳnh Nguyễn Thành Đạt', '0394391204', 'huynhnguyenthanhdat3@gmail.com', NULL, '$2y$10$mqivybuLHjL.vCufZyTU0eCu.gZ2wPpHFivehMaemI/xiF9ZIU8Sa', 'user', '2025-11-17 01:13:45', 457274, 'active'),
-(110, 'Lý Hữu Khang', '0901122002', 'lyhuukhang.driver@gmail.com', NULL, '$2y$10$42F.eoOPaJx7mURssZU1E.9TNZskVBTIlgruRAfShlZaxYLIocpMK', 'driver', '2025-11-17 03:08:02', 0, 'active'),
-(111, 'Ngô Minh Trí', '0901122001', 'ngominhtri.driver@gmail.com', NULL, '$2y$10$cDdxOlsQLX/UepTGv9.eQu8crZe1TXuoVwYZBxwYbNJOma70NU1aW', 'driver', '2025-11-17 03:08:47', 0, 'active'),
-(112, 'Đặng Thành Trung', '0901122003', 'dangthangtrung.driver@gmail.com', NULL, '$2y$10$tRLeykggIiWvMlyvXzP/gOBuB.QlTXfSiSqI6NSN7Zjl3tC.J4TOW', 'driver', '2025-11-17 03:09:22', 0, 'active');
+INSERT INTO `users` (`id`, `full_name`, `phone_number`, `email`, `cccd`, `password`, `google_id`, `avatar`, `role`, `created_at`, `balance`, `status`, `current_lat`, `current_lng`) VALUES
+(24, 'ADMIN', '', 'admin@gmail.com', NULL, '$2y$10$JWgB8OZFiX5ruBA02p6NJuob3mW9IOi06wlVmWTa4YwN.FmPyY4Hq', NULL, NULL, 'admin', '2025-05-12 14:40:09', 0, 'active', NULL, NULL),
+(25, 'Trịnh Kiển Đạt', '0965748370', 'kiendat@gmail.com', NULL, '$2y$10$gBG9DhSmPGSzXwcnTik7W.GHxuaT5DyZaZ.TwA7bwiS5F4608A5fK', NULL, NULL, 'employee', '2025-05-12 14:41:03', 0, 'active', NULL, NULL),
+(26, 'Hoài Ân', '0912341231', 'HoaiAn123@gmail.com', NULL, '$2y$10$5qButFSTrMLSlMWNmy2cyuW2jqAXlgaCTskOym.z7PD10obb5uOpK', NULL, NULL, 'user', '2025-05-27 10:41:56', 163793, 'active', NULL, NULL),
+(31, 'Huỳnh Nguyễn Thành Đạt', '0394391204', 'huynhnguyenthanhdat3@gmail.com', NULL, '$2y$10$mqivybuLHjL.vCufZyTU0eCu.gZ2wPpHFivehMaemI/xiF9ZIU8Sa', NULL, NULL, 'user', '2025-11-17 01:13:45', 457274, 'active', NULL, NULL),
+(110, 'Lý Hữu Khang', '0901122002', 'lyhuukhang.driver@gmail.com', NULL, '$2y$10$42F.eoOPaJx7mURssZU1E.9TNZskVBTIlgruRAfShlZaxYLIocpMK', NULL, NULL, 'driver', '2025-11-17 03:08:02', 0, 'active', 10.80915, 106.631675),
+(111, 'Ngô Minh Trí', '0901122001', 'ngominhtri.driver@gmail.com', NULL, '$2y$10$cDdxOlsQLX/UepTGv9.eQu8crZe1TXuoVwYZBxwYbNJOma70NU1aW', NULL, NULL, 'driver', '2025-11-17 03:08:47', 0, 'active', 10.79955, 106.697225),
+(112, 'Đặng Thành Trung', '0901122003', 'dangthangtrung.driver@gmail.com', NULL, '$2y$10$tRLeykggIiWvMlyvXzP/gOBuB.QlTXfSiSqI6NSN7Zjl3tC.J4TOW', NULL, NULL, 'driver', '2025-11-17 03:09:22', 0, 'active', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -223,6 +225,15 @@ ALTER TABLE `orders`
   ADD KEY `fk_orders_users` (`user_id`);
 
 --
+-- Chỉ mục cho bảng `reviews`
+--
+ALTER TABLE `reviews`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `order_id` (`order_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `driver_id` (`driver_id`);
+
+--
 -- Chỉ mục cho bảng `transaction_history`
 --
 ALTER TABLE `transaction_history`
@@ -235,7 +246,8 @@ ALTER TABLE `transaction_history`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`),
-  ADD UNIQUE KEY `cccd` (`cccd`);
+  ADD UNIQUE KEY `cccd` (`cccd`),
+  ADD KEY `idx_google_id` (`google_id`);
 
 --
 -- Chỉ mục cho bảng `vehicle_prices`
@@ -251,19 +263,25 @@ ALTER TABLE `vehicle_prices`
 -- AUTO_INCREMENT cho bảng `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT cho bảng `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+
+--
+-- AUTO_INCREMENT cho bảng `reviews`
+--
+ALTER TABLE `reviews`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT cho bảng `transaction_history`
 --
 ALTER TABLE `transaction_history`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT cho bảng `users`
@@ -292,12 +310,9 @@ ALTER TABLE `orders`
 -- Các ràng buộc cho bảng `reviews`
 --
 ALTER TABLE `reviews`
-  ADD CONSTRAINT `fk_reviews_orders`
-    FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_reviews_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_reviews_driver`
-    FOREIGN KEY (`driver_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_reviews_driver` FOREIGN KEY (`driver_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_reviews_orders` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_reviews_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `transaction_history`

@@ -134,8 +134,25 @@ function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.email) newErrors.email = 'Vui lòng nhập email';
-    if (!formData.password) newErrors.password = 'Vui lòng nhập mật khẩu';
+    
+    // Kiểm tra email
+    const emailTrimmed = formData.email.trim();
+    if (!emailTrimmed) {
+      newErrors.email = 'Vui lòng nhập email';
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailTrimmed)) {
+        newErrors.email = 'Email không hợp lệ';
+      }
+    }
+
+    // Kiểm tra mật khẩu
+    const passwordTrimmed = formData.password.trim();
+    if (!passwordTrimmed) {
+      newErrors.password = 'Vui lòng nhập mật khẩu';
+    } else if (passwordTrimmed.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -149,8 +166,8 @@ function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
+          email: formData.email.trim(),
+          password: formData.password.trim()
         })
       });
 
@@ -195,19 +212,67 @@ function LoginPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!formData.username.trim()) newErrors.username = 'Vui lòng nhập họ tên';
-    if (!formData.email.trim()) newErrors.email = 'Vui lòng nhập email';
-    if (!formData.phone.trim()) newErrors.phone = 'Vui lòng nhập số điện thoại';
-    if (!formData.password.trim()) newErrors.password = 'Vui lòng nhập mật khẩu';
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email.trim())) {
-      newErrors.email = 'Email không hợp lệ';
+    
+    // Kiểm tra họ tên
+    const usernameTrimmed = formData.username.trim();
+    if (!usernameTrimmed) {
+      newErrors.username = 'Vui lòng nhập họ tên';
+    } else if (usernameTrimmed.length < 2) {
+      newErrors.username = 'Họ tên phải có ít nhất 2 ký tự';
+    } else if (usernameTrimmed.length > 100) {
+      newErrors.username = 'Họ tên không được vượt quá 100 ký tự';
     }
 
-    const phoneRegex = /^[0-9]{10}$/;
-    if (formData.phone && !phoneRegex.test(formData.phone.trim())) {
-      newErrors.phone = 'Số điện thoại không hợp lệ (phải có 10 chữ số)';
+    // Kiểm tra email
+    const emailTrimmed = formData.email.trim();
+    if (!emailTrimmed) {
+      newErrors.email = 'Vui lòng nhập email';
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailTrimmed)) {
+        newErrors.email = 'Email không hợp lệ';
+      } else if (emailTrimmed.length > 255) {
+        newErrors.email = 'Email không được vượt quá 255 ký tự';
+      }
+    }
+
+    // Kiểm tra số điện thoại
+    const phoneTrimmed = formData.phone.trim();
+    if (!phoneTrimmed) {
+      newErrors.phone = 'Vui lòng nhập số điện thoại';
+    } else {
+      // Loại bỏ khoảng trắng và ký tự đặc biệt (giữ lại số và +)
+      const phoneCleaned = phoneTrimmed.replace(/[^0-9+]/g, '');
+      
+      // Kiểm tra số điện thoại Việt Nam
+      // Chấp nhận: 0123456789, 0912345678, +84123456789, +84912345678
+      let isValid = false;
+      
+      if (phoneCleaned.startsWith('+84')) {
+        // Format +84xxxxxxxxx (10 hoặc 11 chữ số sau +84)
+        const after84 = phoneCleaned.substring(3);
+        isValid = /^[0-9]{9,10}$/.test(after84);
+      } else if (phoneCleaned.startsWith('0')) {
+        // Format 0xxxxxxxxx (10 hoặc 11 chữ số)
+        isValid = /^0[0-9]{9,10}$/.test(phoneCleaned);
+      } else if (/^[0-9]{9,10}$/.test(phoneCleaned)) {
+        // Chỉ có số, không có 0 đầu (sẽ tự động thêm 0)
+        isValid = true;
+      }
+      
+      if (!isValid) {
+        newErrors.phone = 'Số điện thoại không hợp lệ (phải là số điện thoại Việt Nam, ví dụ: 0123456789 hoặc +84123456789)';
+      }
+    }
+
+    // Kiểm tra mật khẩu
+    const passwordTrimmed = formData.password.trim();
+    if (!passwordTrimmed) {
+      newErrors.password = 'Vui lòng nhập mật khẩu';
+    } else if (passwordTrimmed.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    } else if (passwordTrimmed.length > 100) {
+      newErrors.password = 'Mật khẩu không được vượt quá 100 ký tự';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -216,6 +281,27 @@ function LoginPage() {
     }
 
     try {
+      // Chuẩn hóa số điện thoại
+      let phoneNormalized = formData.phone.trim().replace(/[^0-9+]/g, '');
+      
+      // Xử lý các trường hợp:
+      if (phoneNormalized.startsWith('+84')) {
+        // Format +84xxxxxxxxx -> 0xxxxxxxxx
+        phoneNormalized = '0' + phoneNormalized.substring(3);
+      } else if (!phoneNormalized.startsWith('0') && /^[0-9]{9,10}$/.test(phoneNormalized)) {
+        // Chỉ có số, không có 0 đầu -> thêm 0
+        phoneNormalized = '0' + phoneNormalized;
+      }
+      
+      // Đảm bảo định dạng cuối cùng là 0xxxxxxxxx (10 hoặc 11 chữ số)
+      if (!/^0[0-9]{9,10}$/.test(phoneNormalized)) {
+        setErrors(prevErrors => ({
+          ...prevErrors,
+          phone: 'Số điện thoại không hợp lệ'
+        }));
+        return;
+      }
+
       const response = await fetch('http://localhost/DACN_Hutech/backend/register_user.php', {
         method: 'POST',
         headers: {
@@ -224,7 +310,7 @@ function LoginPage() {
         body: JSON.stringify({
           username: formData.username.trim(),
           email: formData.email.trim(),
-          phone: formData.phone.trim(),
+          phone: phoneNormalized,
           password: formData.password.trim()
         })
       });
@@ -329,7 +415,7 @@ function LoginPage() {
           </h2>
         </div>
 
-        <form onSubmit={isLogin ? handleLogin : handleRegister}>
+        <form onSubmit={isLogin ? handleLogin : handleRegister} noValidate>
           
           {!isLogin && (
             
@@ -341,7 +427,6 @@ function LoginPage() {
                 value={formData.username}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:border-transparent"
-                required
               />
               {errors.username && (
                 <p className="text-red-400 text-sm mt-1">{errors.username}</p>
@@ -352,12 +437,12 @@ function LoginPage() {
           <div className="mb-4">
             <label className="block text-sm font-medium text-white mb-2">Email</label>
             <input
-              type="email"
+              type="text"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
               className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:border-transparent"
-              required
+              autoComplete="email"
             />
             {errors.email && (
               <p className="text-red-400 text-sm mt-1">{errors.email}</p>
@@ -373,12 +458,12 @@ function LoginPage() {
                   <span className="text-black mr-1 self-center">+84</span>
                 </div>
                 <input
-                  type="text"
+                  type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-r-md focus:outline-none focus:border-transparent  placeholder-white/70"
-                  required
+                  autoComplete="tel"
                 />
               </div>
               {errors.phone && (
@@ -395,7 +480,7 @@ function LoginPage() {
               value={formData.password}
               onChange={handleInputChange}
               className="w-full px-3 py-2 bg-white/20 backdrop-blur-sm  rounded-md focus:outline-none focus:border-transparent text-black placeholder-white/70"
-              required
+              autoComplete={isLogin ? "current-password" : "new-password"}
             />
             {errors.password && (
               <p className="text-red-400 text-sm mt-1">{errors.password}</p>

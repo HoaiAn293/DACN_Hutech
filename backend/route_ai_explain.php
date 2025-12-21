@@ -27,7 +27,7 @@ if (!$pickupAddress || !$deliveryAddress || $distanceKm === null || $etaMinutes 
     exit;
 }
 
-$api_key = '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';
+$api_key = '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';
 
 $url = "https://openrouter.ai/api/v1/chat/completions";
 

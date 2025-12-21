@@ -21,11 +21,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    $email = $data['email'] ?? '';
-    $password = $data['password'] ?? '';
+    $email = isset($data['email']) ? trim($data['email']) : '';
+    $password = isset($data['password']) ? trim($data['password']) : '';
 
-    if (empty($email) || empty($password)) {
-        echo json_encode(["success" => false, "message" => "Vui lòng điền đầy đủ thông tin!"]);
+    // Kiểm tra các trường bắt buộc
+    if (empty($email)) {
+        echo json_encode(["success" => false, "message" => "Vui lòng nhập email!"]);
+        exit();
+    }
+
+    if (empty($password)) {
+        echo json_encode(["success" => false, "message" => "Vui lòng nhập mật khẩu!"]);
+        exit();
+    }
+
+    // Kiểm tra định dạng email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(["success" => false, "message" => "Email không hợp lệ!"]);
+        exit();
+    }
+
+    // Kiểm tra độ dài mật khẩu
+    if (strlen($password) < 6) {
+        echo json_encode(["success" => false, "message" => "Mật khẩu phải có ít nhất 6 ký tự!"]);
         exit();
     }
 

@@ -26,9 +26,23 @@ const TabCompleted = () => {
           fetch(
             `http://localhost/DACN_Hutech/backend/get_review.php?order_id=${order.id}&user_id=${user.id}`
           )
-            .then((res) => res.json())
+            .then((res) => {
+              if (!res.ok) {
+                throw new Error('Failed to fetch review');
+              }
+              return res.json();
+            })
             .then((review) => {
-              setReviews((prev) => ({ ...prev, [order.id]: review }));
+              // Chỉ set review nếu có dữ liệu hợp lệ
+              if (review && review.id && review.rating) {
+                setReviews((prev) => ({ ...prev, [order.id]: review }));
+              } else {
+                setReviews((prev) => ({ ...prev, [order.id]: null }));
+              }
+            })
+            .catch((err) => {
+              console.error(`Lỗi khi tải review cho đơn ${order.id}:`, err);
+              setReviews((prev) => ({ ...prev, [order.id]: null }));
             });
         });
       })
@@ -49,9 +63,23 @@ const TabCompleted = () => {
     fetch(
       `http://localhost/DACN_Hutech/backend/get_review.php?order_id=${reviewData.order_id}&user_id=${user.id}`
     )
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch review');
+        }
+        return res.json();
+      })
       .then((review) => {
-        setReviews((prev) => ({ ...prev, [reviewData.order_id]: review }));
+        // Chỉ set review nếu có dữ liệu hợp lệ
+        if (review && review.id && review.rating) {
+          setReviews((prev) => ({ ...prev, [reviewData.order_id]: review }));
+        } else {
+          setReviews((prev) => ({ ...prev, [reviewData.order_id]: null }));
+        }
+      })
+      .catch((err) => {
+        console.error('Lỗi khi tải lại review:', err);
+        setReviews((prev) => ({ ...prev, [reviewData.order_id]: null }));
       });
   };
 
@@ -270,34 +298,24 @@ const TabCompleted = () => {
             </div>
             {/* Form đánh giá hoặc hiển thị đánh giá */}
             <div className="mt-8">
-              {reviews[order.id] && reviews[order.id] !== null ? (
+              {reviews[order.id] && 
+               reviews[order.id] !== null && 
+               reviews[order.id].id && 
+               reviews[order.id].rating ? (
                 <div className="p-4 bg-green-50 rounded-xl border border-green-200">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-semibold text-green-700">
                       Đánh giá của bạn: {reviews[order.id].rating} sao
                     </span>
-                    <div className="flex gap-2">
-                      <button
-                        className="text-blue-600 underline text-sm"
-                        onClick={() => {
-                          setSelectedReview(reviews[order.id]);
-                          setSelectedOrder(order);
-                        }}
-                      >
-                        Xem chi tiết
-                      </button>
-                      <button
-                        className="text-red-600 underline text-sm ml-2"
-                        onClick={() => handleDeleteReview(order.id)}
-                      >
-                        Xóa đánh giá
-                      </button>
+                  
+                  </div>
+                  {reviews[order.id].comment && (
+                    <div className="text-gray-700 mb-2">
+                      {reviews[order.id].comment}
                     </div>
-                  </div>
-                  <div className="text-gray-700 mb-2">
-                    {reviews[order.id].comment}
-                  </div>
+                  )}
                   {reviews[order.id].images &&
+                    Array.isArray(reviews[order.id].images) &&
                     reviews[order.id].images.length > 0 && (
                       <div className="flex gap-2 mt-2">
                         {reviews[order.id].images.map((img, idx) => (
@@ -306,6 +324,9 @@ const TabCompleted = () => {
                             src={img}
                             alt={`review-img-${idx}`}
                             className="w-20 h-20 object-cover rounded border"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
                           />
                         ))}
                       </div>
